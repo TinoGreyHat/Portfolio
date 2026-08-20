@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { THEMES, applyTheme } from '../utils/theme';
 
 const LS_PROJECTS_KEY = 'tinogreyhat_projects';
 const LS_CERTS_KEY = 'tinogreyhat_certs';
@@ -38,29 +39,46 @@ export default function Terminal({ projects: propProjects, certs: propCerts }) {
   const commands = {
     help: () => [
       "Commandes disponibles :",
-      "  whoami      - Affiche des informations sur mon profil.",
-      "  skills      - Affiche mon éventail de compétences en cybersécurité.",
-      "  projects    - Liste mes projets techniques.",
-      "  certs       - Liste mes certifications et diplômes.",
-      "  veille      - Affiche mes sources de veille technologique.",
-      "  contact     - Affiche mes coordonnées et liens sociaux.",
-      "  neofetch    - Affiche les spécifications du système avec un logo ASCII.",
-      "  clear       - Efface le terminal.",
-      "  cat <file>  - Lit le contenu d'un fichier (ex: cat flag.txt)."
+      "  whoami        - Affiche des informations sur mon profil.",
+      "  skills        - Affiche mon éventail de compétences en cybersécurité.",
+      "  projects      - Liste mes projets techniques.",
+      "  certs         - Liste mes certifications et diplômes.",
+      "  veille        - Affiche mes sources de veille technologique.",
+      "  contact       - Affiche mes coordonnées et liens sociaux.",
+      "  matrix        - Active/Désactive l'animation Matrix Digital Rain en fond.",
+      "  theme <color> - Change le thème de couleur (green, cyan, red, purple, amber).",
+      "  neofetch      - Affiche les spécifications du système avec un logo ASCII.",
+      "  reset         - Réinitialise les données des projets et certificats.",
+      "  clear         - Efface le terminal.",
+      "  cat <file>    - Lit le contenu d'un fichier (ex: cat flag.txt)."
     ],
+    matrix: () => {
+      window.dispatchEvent(new CustomEvent('toggle-matrix-bg'));
+      return ["[SYSTEM: MATRIX_RAIN_TOGGLED] Mode d'arrière-plan basculé (Matrix Rain / Particules)."];
+    },
+    reset: () => {
+      try {
+        localStorage.removeItem(LS_PROJECTS_KEY);
+        localStorage.removeItem(LS_CERTS_KEY);
+        setTimeout(() => window.location.reload(), 800);
+        return ["[SYSTEM: RESET] Données système réinitialisées. Rechargement..."];
+      } catch (e) {
+        return [`[ERROR] Échec du reset: ${e.message}`];
+      }
+    },
     whoami: () => [
       "Profil : TETE Kokou Blaise Etiam",
       "Alias  : TinoGreyHat",
-      "Rôle   : Étudiant de 3ème année en Cybersécurité & Hacking Éthique",
-      "Statut : Recherche de stage / alternance en sécurité offensive ou SOC",
-      "Focus  : Analyse de vulnérabilités, Pentesting, SIEM Wazuh, Scripting Python/Bash"
+      "Rôle   : Analyste SOC & Blue Team Specialist",
+      "Statut : Recherche de stage / alternance en Analyse SOC / Security Engineering",
+      "Focus  : Supervision SIEM (Wazuh/Splunk), Threat Hunting, Active Response, Hardening"
     ],
     skills: () => [
       "Compétences Techniques :",
-      "  [+] Red Team   : Nmap, Gobuster, Metasploit, Web Pentesting (OWASP)",
-      "  [+] Blue Team  : SIEM Wazuh, Analyse de logs (Syslog), Hardening Linux",
-      "  [+] Scripting  : Python (outils de sécurité), Bash automation, Git",
-      "  [+] Systèmes   : Administration Linux avancée, Réseaux (TCP/IP, routage)"
+      "  [+] Blue Team  : SIEM Wazuh, Threat Hunting, Décodage de Logs XML, Active Response",
+      "  [+] Hardening  : Hardening Linux, Firewalls (Iptables), Wireshark, Syslog",
+      "  [+] Scripting  : Parseurs de logs Python, Automation Bash, Docker",
+      "  [+] Red Team   : Audit de vulnérabilités, Nmap, Pentesting Web (OWASP)"
     ],
     projects: () => {
       const liveProjects = getLiveProjects();
@@ -124,6 +142,24 @@ export default function Terminal({ projects: propProjects, certs: propCerts }) {
       return;
     } else if (commands[trimmed]) {
       response = commands[trimmed]();
+    } else if (trimmed.startsWith("theme")) {
+      const parts = trimmed.split(/\s+/);
+      const colorArg = parts[1];
+      if (!colorArg) {
+        response = [
+          "Usage: theme <green | cyan | red | purple | amber>",
+          "Thèmes disponibles :",
+          ...Object.keys(THEMES).map(k => `  - ${k.padEnd(8)} (${THEMES[k].name})`)
+        ];
+      } else if (THEMES[colorArg]) {
+        applyTheme(colorArg);
+        response = [`[SYSTEM: THEME_UPDATED] Thème appliqué : ${THEMES[colorArg].name}`];
+      } else {
+        response = [
+          `Thème inconnu: '${colorArg}'.`,
+          `Thèmes valides: ${Object.keys(THEMES).join(', ')}.`
+        ];
+      }
     } else if (trimmed.startsWith("cat ")) {
       const fileName = trimmed.substring(4).trim();
       if (fileName === "flag.txt") {

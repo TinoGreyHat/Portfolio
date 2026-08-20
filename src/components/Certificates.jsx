@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Award, ExternalLink, Lock, Unlock, Plus, X } from 'lucide-react';
+import { Award, ExternalLink, Lock, Unlock, Plus, X, Trash2 } from 'lucide-react';
 
 const EMPTY_CERT_FORM = {
   title: '',
@@ -121,8 +121,15 @@ function AddCertModal({ onAdd, onClose }) {
   );
 }
 
-export default function Certificates({ certs, addCert }) {
+export default function Certificates({ certs, addCert, deleteCert }) {
   const [showAddModal, setShowAddModal] = useState(false);
+
+  const handleDelete = (e, cert) => {
+    e.stopPropagation();
+    if (window.confirm(`Supprimer la certification "${cert.title}" ?`)) {
+      if (deleteCert) deleteCert(cert.id);
+    }
+  };
 
   return (
     <section className="section-container reveal visible">
@@ -191,17 +198,37 @@ export default function Certificates({ certs, addCert }) {
 
               <div className="cert-footer">
                 <span className="cert-date">{cert.date}</span>
-                {cert.verificationLink && (
-                  <a
-                    href={cert.verificationLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="cert-verify-link"
-                  >
-                    Vérifier
-                    <ExternalLink size={12} />
-                  </a>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {cert.verificationLink && (
+                    <a
+                      href={cert.verificationLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="cert-verify-link"
+                    >
+                      Vérifier
+                      <ExternalLink size={12} />
+                    </a>
+                  )}
+                  {deleteCert && (
+                    <button
+                      onClick={(e) => handleDelete(e, cert)}
+                      title="Supprimer cette certification"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        transition: 'color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.color = 'var(--red)'}
+                      onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

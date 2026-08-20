@@ -1,46 +1,46 @@
 export const projectsData = [
   {
     id: 1,
-    title: "Scanner de Ports Multi-threadé",
+    title: "Scanner de Ports Multi-threadé & Banner Grabber",
     category: "scripting",
     status: "COMPLETED",
     date: "Janvier 2025",
-    tags: ["Python", "Sockets", "Threading", "Security Tools"],
-    description: "Développement d'un scanner de ports réseau rapide et performant en Python utilisant le multi-threading pour accélérer la détection des services actifs.",
-    details: "Ce projet vise à concevoir un outil de reconnaissance léger et rapide. En exploitant la bibliothèque 'threading' de Python, le script parvient à scanner de larges plages de ports en une fraction du temps nécessaire à un scan classique à un seul thread. Il intègre le Banner Grabbing (récupération de la bannière réseau) permettant d'identifier le nom et la version exacte des services en cours d'exécution (SSH, FTP, HTTP, etc.) afin d'aider à la détection de vulnérabilités connues.",
+    tags: ["Python", "Sockets", "Threading", "Reconnaissance"],
+    description: "Tooling Offensif : Outil de reconnaissance réseau hautes performances en Python exploitant le multi-threading et le Banner Grabbing automatisé.",
+    details: "Développement d'un scanner de ports custom pour accélérer la phase de recon (reconnaissance) lors d'un audit de sécurité. En exploitant la programmation asynchrone/multi-threadée en Python, l'outil scanne des plages de ports IP en quelques secondes. Il extrait automatiquement les bannières réseau des services (SSH, FTP, HTTP) pour croiser les versions identifiées avec la base de données de failles connues (CVE).",
     githubLink: "https://github.com/TinoGreyHat/port-scanner-python"
   },
   {
     id: 2,
-    title: "Audit & Durcissement d'un Service FTP",
+    title: "Exploitation Controlled vsftpd & Hardening System",
     category: "pentest",
     status: "COMPLETED",
     date: "Février 2025",
-    tags: ["Pentesting", "FTP", "Metasploit", "Hardening"],
-    description: "Exploitation contrôlée d'une faille FTP (backdoor vsftpd 2.3.4) dans un lab local, suivie de la remédiation et de la sécurisation complète du serveur.",
-    details: "Ce projet illustre une démarche complète de Pentest et de sécurisation (Red Team & Blue Team). En utilisant un environnement de laboratoire Metasploitable, j'ai identifié un service FTP vulnérable grâce à Nmap. J'ai ensuite exploité cette porte dérobée (vsftpd 2.3.4) avec Metasploit pour obtenir un shell root interactif. Enfin, j'ai appliqué les mesures de durcissement (hardening) : mise à jour du service, désactivation des connexions anonymes, restriction des permissions utilisateurs et configuration de règles iptables pour isoler le port.",
+    tags: ["Pentesting", "Metasploit", "Root Shell", "Hardening"],
+    description: "Simulation Red/Blue Team : Du Remote Shell Root (backdoor vsftpd 2.3.4) jusqu'au durcissement système et à l'isolation réseau via iptables.",
+    details: "Démonstration complète de la chaîne d'attaque et de la remédiation. Phase Red Team : Scan de vulnérabilités Nmap, exploitation de la porte dérobée historique vsftpd 2.3.4 via Metasploit et obtention d'un accès Root interactif. Phase Blue Team : Application du correctif, désactivation des accès anonymes, chroot des utilisateurs FTP et déploiement de règles Iptables strictes pour filtrer l'accès au service.",
     githubLink: "https://github.com/TinoGreyHat/ftp-exploitation-hardening"
   },
   {
     id: 3,
-    title: "Détection d'Attaques SIEM avec Wazuh",
+    title: "Architecture SOC & Détection d'Attaques Wazuh SIEM",
     category: "defensive",
     status: "COMPLETED",
     date: "Mars 2025",
-    tags: ["SIEM", "Wazuh", "SOC", "Active Response"],
-    description: "Déploiement d'un agent de supervision Wazuh pour la détection en temps réel d'attaques par force brute SSH avec bannissement automatisé.",
-    details: "Mise en place d'un environnement de détection et de réponse aux incidents. J'ai déployé un agent Wazuh sur un serveur Linux cible et configuré le gestionnaire Wazuh. J'ai rédigé des règles XML personnalisées pour analyser les logs d'authentification (`/var/log/auth.log`) et détecter les attaques par dictionnaire/force brute sur le service SSH. Pour bloquer l'attaque de manière proactive, j'ai configuré un script Active Response qui ajoute dynamiquement l'adresse IP de l'attaquant au pare-feu local.",
+    tags: ["SIEM", "Wazuh", "Threat Hunting", "Active Response"],
+    description: "Supervision & Threat Hunting : Déploiement d'un agent Wazuh SIEM, écriture de règles XML sur-mesure et réponse automatisée (Active Response).",
+    details: "Mise en place d'un SOC de laboratoire pour la détection proactive des menaces. Déploiement d'agents de supervision sur cibles Linux. Écriture de décodeurs et de règles d'alerte XML personnalisées pour analyser `/var/log/auth.log` et intercepter les attaques par dictionnaire/force brute SSH. Configuration d'un script d'Active Response pour bannir automatiquement les IP attaquantes au niveau du pare-feu dès le franchissement de seuil d'alerte.",
     githubLink: "https://github.com/TinoGreyHat/wazuh-siem-dashboard"
   },
   {
     id: 4,
-    title: "Reverse Engineering d'un Crackme en C",
+    title: "Reverse Engineering d'un Binaire Obfusqué en C",
     category: "reverse",
     status: "IN_PROGRESS",
     date: "Avril 2025",
-    tags: ["Ghidra", "x64dbg", "Assembleur", "Reverse Engineering"],
-    description: "Analyse statique et dynamique d'un exécutable compilé en C pour en comprendre la logique d'authentification et en extraire le mot de passe secret.",
-    details: "Projet d'apprentissage en rétro-ingénierie. À l'aide de Ghidra, j'ai effectué une analyse statique pour décompiler le binaire et identifier le flux de la fonction de validation de la licence (`strcmp` et calculs de hash simples). J'ai complété cette étude par une analyse dynamique pas à pas sous x64dbg afin d'examiner l'état des registres et de la pile (stack) mémoire au moment de la comparaison, réussissant à extraire la clé secrète en clair.",
+    tags: ["Ghidra", "x64dbg", "Assembleur x86", "Reverse Engineering"],
+    description: "Analyse Malware & Reverse : Rétro-ingénierie statique et dynamique sous Ghidra & x64dbg pour décompiler la logique de licence et extraire le secret.",
+    details: "Analyse binaire approfondie. Phase Statique : Décompilation de l'exécutable C avec Ghidra pour reconstituer le graphe de contrôle de flux et isoler les fonctions de validation de mot de passe. Phase Dynamique : Exécution contrôlée sous debugger x64dbg avec pose de breakpoints sur les registres EAX/RAX et inspection de la mémoire stack pour extraire la clé de licence en clair.",
     githubLink: "https://github.com/TinoGreyHat/reverse-engineering-crackme"
   }
 ];

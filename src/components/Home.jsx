@@ -41,23 +41,23 @@ const Linkedin = (props) => (
 );
 
 
+const TITLES = [
+  "Analyste SOC & Blue Team Specialist",
+  "Threat Hunter & Expert Wazuh SIEM",
+  "Spécialiste en Détection d'Incidents & Hardening",
+  "Security Engineer & Analyse de Logs (Syslog/ELK)"
+];
+
 export default function Home({ setActiveTab, projects, certs }) {
   const [text, setText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [loopNum, setLoopNum] = useState(0);
   const [typingSpeed, setTypingSpeed] = useState(150);
 
-  const titles = [
-    "Étudiant en Cybersécurité",
-    "Passionné par le Hacking Éthique",
-    "Apprenti Pentester / Analyste SOC",
-    "Développeur d'outils de sécurité"
-  ];
-
   useEffect(() => {
     let handle = setTimeout(() => {
-      const i = loopNum % titles.length;
-      const fullTitle = titles[i];
+      const i = loopNum % TITLES.length;
+      const fullTitle = TITLES[i];
 
       if (isDeleting) {
         setText(fullTitle.substring(0, text.length - 1));
@@ -107,15 +107,16 @@ export default function Home({ setActiveTab, projects, certs }) {
           </div>
 
           <p className="profile-bio">
-            Étudiant passionné par l'exploration des vulnérabilités, l'administration de systèmes sécurisés 
-            et la supervision SIEM. Je conçois des scripts d'audit et m'entraîne quotidiennement en CTF 
-            pour forger mes compétences défensives et offensives.
+            Spécialisé en sécurité défensive (Blue Team / SOC) et supervision des infrastructures. 
+            Je conçois des règles de détection sur-mesure (Wazuh SIEM), analyse des journaux d'événements 
+            et automatise la réponse aux incidents (Active Response) pour protéger et durcir 
+            les systèmes face aux cybermenaces.
           </p>
 
           <div className="cyber-badges">
-            <span className="badge-item success">[SYSTEM: SECURE]</span>
-            <span className="badge-item">[ROLE: BLUE/RED]</span>
-            <span className="badge-item">[PENTEST: LABS]</span>
+            <span className="badge-item success">[ROLE: BLUE TEAM / SOC]</span>
+            <span className="badge-item">[SIEM: WAZUH / SPLUNK]</span>
+            <span className="badge-item">[HARDENING: LINUX / NET]</span>
           </div>
 
           <div className="btn-container">
@@ -130,7 +131,7 @@ export default function Home({ setActiveTab, projects, certs }) {
             </a>
             <button 
               className="cyber-btn sec"
-              onClick={() => setActiveTab('contact')}
+              onClick={() => setActiveTab('about')}
             >
               <Mail size={16} />
               Me contacter

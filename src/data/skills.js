@@ -1,54 +1,54 @@
 export const skillsData = [
   {
-    id: "offensive",
-    title: "Sécurité Offensive (Red Team)",
-    icon: "ShieldAlert",
-    description: "Recherche active de vulnérabilités, tests d'intrusion et exploitation contrôlée.",
-    skillsList: [
-      { name: "Reconnaissance & Scan (Nmap, Gobuster, Nikto)", level: 85 },
-      { name: "Exploitation de vulnérabilités (Metasploit, exploit-db)", level: 75 },
-      { name: "Pentesting Web (OWASP Top 10, SQLi, XSS, CSRF)", level: 70 },
-      { name: "Audit de protocoles (FTP, SSH, SMB, RDP)", level: 80 }
-    ],
-    tags: ["Nmap", "Metasploit", "Gobuster", "Burp Suite", "Kali Linux", "Wireshark"]
-  },
-  {
     id: "defensive",
-    title: "Sécurité Défensive & Détection (Blue Team)",
+    title: "Sécurité Défensive & SOC (Blue Team)",
     icon: "ShieldCheck",
-    description: "Surveillance d'infrastructures, analyse de logs et mise en place de contre-mesures.",
+    description: "Supervision SIEM d'infrastructures, analyse de journaux d'événements, Threat Hunting et réponse aux incidents.",
     skillsList: [
-      { name: "Supervision SIEM (Wazuh, ELK Stack)", level: 80 },
-      { name: "Analyse de logs & forensic de base (Syslog, Event Viewer)", level: 75 },
-      { name: "Détection d'intrusions (IDS/IPS Snort/Suricata)", level: 65 },
-      { name: "Durcissement système (Hardening Linux & Windows)", level: 70 }
+      { name: "Supervision SIEM & Règles XML (Wazuh, ELK Stack, Splunk)", level: 90 },
+      { name: "Analyse de logs & Threat Hunting (Syslog, Auth.log, Windows EventViewer)", level: 85 },
+      { name: "Réponse aux Incidents & Active Response (Firewall Banning)", level: 80 },
+      { name: "Durcissement d'infrastructures (Hardening Linux, Iptables)", level: 80 }
     ],
-    tags: ["Wazuh", "SIEM", "IDS/IPS", "Syslog", "Analyse de Logs", "DFIR Basics"]
+    tags: ["Wazuh SIEM", "Splunk", "Threat Hunting", "Syslog", "Active Response", "Hardening", "DFIR"]
   },
   {
     id: "programming",
-    title: "Scripting & Automatisation",
+    title: "Scripting & Automatisation Sécurité",
     icon: "Code",
-    description: "Développement d'outils sur mesure et automatisation de tâches de sécurité.",
+    description: "Développement de scripts d'analyse sur mesure et automatisation de tâches SOC/Défensive.",
     skillsList: [
-      { name: "Développement de scripts de sécurité (Python)", level: 85 },
-      { name: "Automatisation système (Bash scripting)", level: 80 },
+      { name: "Scripting d'outils de sécurité (Python)", level: 85 },
+      { name: "Automatisation système & parseurs de logs (Bash / Regex)", level: 85 },
       { name: "Gestion de version & CI/CD (Git, GitHub)", level: 75 },
-      { name: "Conteneurisation (Docker)", level: 60 }
+      { name: "Conteneurisation d'agents (Docker)", level: 65 }
     ],
-    tags: ["Python", "Bash", "Git", "Docker", "Regex", "Automatisation"]
+    tags: ["Python", "Bash", "Regex Parsers", "Git", "Docker", "Automatisation SOC"]
   },
   {
     id: "systems",
-    title: "Systèmes & Réseaux",
+    title: "Systèmes & Réseaux Sécurisés",
     icon: "Terminal",
-    description: "Administration sécurisée de serveurs et conception d'architectures réseau.",
+    description: "Administration sécurisée de serveurs, filtrage réseau et isolation de services.",
     skillsList: [
       { name: "Administration Linux (Debian, Ubuntu, Rocky Linux)", level: 85 },
-      { name: "Administration Windows Server & Active Directory", level: 65 },
-      { name: "Protocoles réseau & routage (TCP/IP, DNS, DHCP)", level: 80 },
-      { name: "Configuration de Firewalls & VPN (iptables, OpenVPN)", level: 70 }
+      { name: "Protocoles réseau & Analyse de paquets (TCP/IP, Wireshark)", level: 80 },
+      { name: "Configuration Firewalls & Filtrage (Iptables, UFW, VPN)", level: 75 },
+      { name: "Administration Windows Server & Active Directory (Bases)", level: 65 }
     ],
-    tags: ["Linux", "Active Directory", "TCP/IP", "DNS/DHCP", "VPN", "SSH/FTP"]
+    tags: ["Linux Hardening", "Wireshark", "TCP/IP", "Iptables", "DNS/DHCP", "VPN"]
+  },
+  {
+    id: "offensive",
+    title: "Sécurité Offensive & Audit (Red Team)",
+    icon: "ShieldAlert",
+    description: "Compréhension de la mécanique d'attaque (OWASP, Pentesting) pour renforcer les défenses.",
+    skillsList: [
+      { name: "Scan de vulnérabilités & Reconnaissance (Nmap, Gobuster)", level: 80 },
+      { name: "Audit de protocoles (FTP, SSH, SMB, RDP)", level: 75 },
+      { name: "Pentesting Web & Analyse de failles (OWASP Top 10)", level: 70 },
+      { name: "Compréhension des Exploits & Reverse (Metasploit, Ghidra)", level: 65 }
+    ],
+    tags: ["Nmap", "Metasploit", "Burp Suite", "OWASP", "Ghidra", "Wireshark"]
   }
 ];

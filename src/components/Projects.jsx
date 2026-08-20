@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FolderGit2, ExternalLink, X, Calendar, Shield, Activity, Search, Plus } from 'lucide-react';
+import { FolderGit2, X, Calendar, Shield, Activity, Search, Plus, Trash2 } from 'lucide-react';
 
 // Inline SVG component to bypass missing brand icons in the registry's lucide-react version
 const Github = (props) => (
@@ -165,7 +165,7 @@ function AddProjectModal({ onAdd, onClose }) {
   );
 }
 
-export default function Projects({ projects, addProject }) {
+export default function Projects({ projects, addProject, deleteProject }) {
   const [filter, setFilter] = useState('all');
   const [selectedProject, setSelectedProject] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -181,6 +181,14 @@ export default function Projects({ projects, addProject }) {
   const filteredProjects = filter === 'all'
     ? projects
     : projects.filter(p => p.category === filter);
+
+  const handleDelete = (e, project) => {
+    e.stopPropagation();
+    if (window.confirm(`Supprimer le projet "${project.title}" ?`)) {
+      if (deleteProject) deleteProject(project.id);
+      if (selectedProject?.id === project.id) setSelectedProject(null);
+    }
+  };
 
   return (
     <section className="section-container reveal visible">
@@ -258,7 +266,7 @@ export default function Projects({ projects, addProject }) {
                   onClick={() => setSelectedProject(project)}
                 >
                   <Search size={14} />
-                  Détails Techniques
+                  Détails
                 </button>
                 {project.githubLink && (
                   <a
@@ -270,6 +278,16 @@ export default function Projects({ projects, addProject }) {
                     <Github size={14} />
                     GitHub
                   </a>
+                )}
+                {deleteProject && (
+                  <button
+                    className="project-link-btn"
+                    onClick={(e) => handleDelete(e, project)}
+                    title="Supprimer ce projet"
+                    style={{ color: 'var(--red)', borderColor: 'rgba(255,62,108,0.2)' }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 )}
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NetworkBackground from './components/NetworkBackground';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -8,62 +8,45 @@ import Projects from './components/Projects';
 import Certificates from './components/Certificates';
 import About from './components/About';
 import Veille from './components/Veille';
-import { projectsData } from './data/projects';
-import { certsData } from './data/certs';
-
-// --- Helpers localStorage ---
-const LS_PROJECTS_KEY = 'tinogreyhat_projects';
-const LS_CERTS_KEY = 'tinogreyhat_certs';
-
-const loadFromStorage = (key, fallback) => {
-  try {
-    const stored = localStorage.getItem(key);
-    if (stored) return JSON.parse(stored);
-  } catch (e) {
-    console.warn('localStorage read failed:', e);
-  }
-  return fallback;
-};
-
-const saveToStorage = (key, value) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
-    console.warn('localStorage write failed:', e);
-  }
-};
+import { initTheme } from './utils/theme';
+import { loadProjects, saveProject, deleteProject, loadCerts, saveCert, deleteCert } from './services/cloudDb';
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
+  const [projects, setProjects] = useState([]);
+  const [certs, setCerts] = useState([]);
 
-  // --- Global State for Projects ---
-  const [projects, setProjects] = useState(() =>
-    loadFromStorage(LS_PROJECTS_KEY, projectsData)
-  );
+  useEffect(() => {
+    initTheme();
 
-  // --- Global State for Certificates ---
-  const [certs, setCerts] = useState(() =>
-    loadFromStorage(LS_CERTS_KEY, certsData)
-  );
+    // Async load from Cloud DB / LocalStorage Hybrid
+    async function initData() {
+      const p = await loadProjects();
+      const c = await loadCerts();
+      setProjects(p);
+      setCerts(c);
+    }
+    initData();
+  }, []);
 
-  const addProject = (newProject) => {
-    const withId = {
-      ...newProject,
-      id: Date.now(),
-    };
-    const updated = [...projects, withId];
+  const addProject = async (newProject) => {
+    const updated = await saveProject(newProject);
     setProjects(updated);
-    saveToStorage(LS_PROJECTS_KEY, updated);
   };
 
-  const addCert = (newCert) => {
-    const withId = {
-      ...newCert,
-      id: Date.now(),
-    };
-    const updated = [...certs, withId];
+  const removeProject = async (id) => {
+    const updated = await deleteProject(id);
+    setProjects(updated);
+  };
+
+  const addCert = async (newCert) => {
+    const updated = await saveCert(newCert);
     setCerts(updated);
-    saveToStorage(LS_CERTS_KEY, updated);
+  };
+
+  const removeCert = async (id) => {
+    const updated = await deleteCert(id);
+    setCerts(updated);
   };
 
   const renderActiveComponent = () => {
@@ -73,9 +56,9 @@ function App() {
       case 'skills':
         return <Skills />;
       case 'projects':
-        return <Projects projects={projects} addProject={addProject} />;
+        return <Projects projects={projects} addProject={addProject} deleteProject={removeProject} />;
       case 'certificates':
-        return <Certificates certs={certs} addCert={addCert} />;
+        return <Certificates certs={certs} addCert={addCert} deleteCert={removeCert} />;
       case 'about':
         return <About />;
       case 'veille':

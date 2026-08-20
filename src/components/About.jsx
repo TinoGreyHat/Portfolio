@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Send, CheckCircle2, Shield, Calendar, BookOpen, Search } from 'lucide-react';
+import { User, Send, CheckCircle2, Shield, BookOpen } from 'lucide-react';
 
 export default function About() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -9,34 +9,35 @@ export default function About() {
     e.preventDefault();
     if (formData.name && formData.email && formData.message) {
       setSubmitted(true);
-      // Simulate API/Formspree or email submission
-      console.log('Sending message to blaisete2@gmail.com:', formData);
+      const subject = encodeURIComponent(`[Portfolio Transmission] Message de ${formData.name}`);
+      const body = encodeURIComponent(`Identité : ${formData.name}\nEmail : ${formData.email}\n\nMessage :\n${formData.message}`);
+      window.location.href = `mailto:blaisete2@gmail.com?subject=${subject}&body=${body}`;
     }
   };
 
   const timelineData = [
     {
       date: "2023 - 2026",
-      title: "Licence Professionnelle en Cybersécurité",
-      desc: "Études supérieures focalisées sur la sécurité des systèmes d'information, l'architecture réseau sécurisée et la gestion des risques cybernétiques.",
+      title: "Spécialisation Cybersécurité & Hacking Éthique",
+      desc: "Cursus supérieur axé sur la sécurité des SI, l'architecture réseau sécurisée, l'audit de code, la cryptographie et la gestion des risques cyber (NIST / ISO 27001).",
       active: true
     },
     {
       date: "Décembre 2024",
       title: "Google Cybersecurity Professional",
-      desc: "Certification technique couvrant l'analyse de paquets (Wireshark), la détection avec les SIEM (Splunk, Chronicle), le scripting Python pour la sécurité et la conformité NIST.",
+      desc: "Certification technique validant l'analyse avancée de paquets (Wireshark), la détection SIEM (Splunk, Chronicle), le scripting Python de sécurité et la conformité aux frameworks.",
       active: true
     },
     {
       date: "Début 2025",
-      title: "Projets Labs & Wazuh SIEM",
-      desc: "Création d'un laboratoire de détection d'attaques par force brute. Écriture de règles XML personnalisées de décodage de logs pour Wazuh SIEM.",
+      title: "Laboratoires SOC & Détection Wazuh SIEM",
+      desc: "Conception d'un lab de Threat Hunting. Déploiement d'agents de supervision, écriture de règles XML sur-mesure pour détection de bruteforce et riposte Active Response.",
       active: true
     },
     {
       date: "2025 - 2026",
-      title: "OffSec PEN-100 & Stage d'études",
-      desc: "Préparation active aux bases de l'OSCP (PEN-100) et recherche d'une opportunité de stage de fin d'études ou d'alternance dans la sécurité offensive / SOC.",
+      title: "OffSec PEN-100 & Stage Pentest / SOC",
+      desc: "Préparation active aux fondations de l'OSCP (PEN-100) et recherche d'un stage ou d'une alternance en Sécurité Offensive (Pentest) ou Analyse SOC.",
       active: false
     }
   ];
@@ -50,8 +51,8 @@ export default function About() {
           <div className="title-line"></div>
         </h2>
         <p className="section-desc">
-          Découvrez mon parcours académique, mes aspirations professionnelles et envoyez un rapport 
-          de communication sécurisé directement dans ma boîte de réception.
+          Mon parcours, mes objectifs professionnels, mes laboratoires de recherche et le 
+          canal de communication sécurisé.
         </p>
       </div>
 
@@ -60,13 +61,13 @@ export default function About() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
           <div className="about-intro-text">
             <p>
-              Je m'appelle <strong>TETE Kokou Blaise Etiam</strong> (alias <strong>TinoGreyHat</strong>). Étudiant en 3ème année de cybersécurité, j'ai développé une solide culture de l'analyse, du pentesting et de la défense opérationnelle.
+              Je m'appelle <strong>TETE Kokou Blaise Etiam</strong> (alias <strong>TinoGreyHat</strong>). Praticien passionné de sécurité défensive (Blue Team & SOC), je suis spécialisé dans la supervision SIEM (Wazuh, Splunk), la recherche de menaces (Threat Hunting), l'analyse de logs et le durcissement des systèmes.
             </p>
             <p>
-              Ma philosophie s'ancre dans la <em>curiosité éthique</em> : je suis convaincu que pour concevoir des systèmes de défense impénétrables, il faut en comprendre la logique d'attaque. C'est pourquoi je consacre une grande partie de mon temps libre à concevoir des scripts d'audit en Python et à me confronter aux machines de TryHackMe.
+              Ma philosophie s'ancre dans la <em>vigilance proactive & la défense en profondeur</em> : surveiller les flux en continu, corrélera les signaux faibles et automatiser les réponses aux incidents (Active Response) pour neutraliser les attaques dès les premières étapes du Kill Chain.
             </p>
             <div className="about-highlight-box">
-              "Analyser l'invisible, comprendre pour protéger et durcir les infrastructures face aux menaces de demain."
+              "Surveiller l'invisible, corréler les événements de sécurité et immuniser les infrastructures face aux menaces émergentes."
             </div>
           </div>
 
