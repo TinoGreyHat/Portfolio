@@ -1,20 +1,6 @@
-import { useState } from 'react';
-import { User, Send, CheckCircle2, Shield, BookOpen } from 'lucide-react';
+import { User, BookOpen } from 'lucide-react';
 
 export default function About() {
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (formData.name && formData.email && formData.message) {
-      setSubmitted(true);
-      const subject = encodeURIComponent(`[Portfolio Transmission] Message de ${formData.name}`);
-      const body = encodeURIComponent(`Identité : ${formData.name}\nEmail : ${formData.email}\n\nMessage :\n${formData.message}`);
-      window.location.href = `mailto:blaisete2@gmail.com?subject=${subject}&body=${body}`;
-    }
-  };
-
   const timelineData = [
     {
       date: "2023 - 2026",
@@ -43,7 +29,7 @@ export default function About() {
   ];
 
   return (
-    <section className="section-container reveal visible">
+    <section className="section-container reveal visible about-page-wrapper">
       <div className="section-header">
         <h2 className="section-title">
           <User className="title-icon" size={28} />
@@ -51,13 +37,11 @@ export default function About() {
           <div className="title-line"></div>
         </h2>
         <p className="section-desc">
-          Mon parcours, mes objectifs professionnels, mes laboratoires de recherche et le 
-          canal de communication sécurisé.
+          Mon parcours, mes objectifs professionnels et mes laboratoires de recherche.
         </p>
       </div>
 
-      <div className="about-layout">
-        {/* Left column - Biography and Timeline */}
+      <div className="about-layout" style={{ gridTemplateColumns: '1fr', maxWidth: '800px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
           <div className="about-intro-text">
             <p>
@@ -88,87 +72,6 @@ export default function About() {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* Right column - Secure contact Console */}
-        <div>
-          <div className="contact-container glass-panel">
-            <h3 className="contact-header">
-              <Shield size={18} className="title-icon" />
-              SECURE_TRANSMISSION_PROTOCOL
-            </h3>
-
-            {submitted ? (
-              <div 
-                style={{ 
-                  textAlign: 'center', 
-                  padding: '30px 0', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  gap: '16px' 
-                }}
-              >
-                <CheckCircle2 size={48} style={{ color: 'var(--accent)' }} />
-                <h4 style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>REPORT_SENT_SUCCESSFULLY</h4>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-                  Merci pour votre message. La connexion sécurisée a été fermée. Je vous répondrai dans les meilleurs délais.
-                </p>
-                <button 
-                  className="cyber-btn sec" 
-                  style={{ marginTop: '10px' }}
-                  onClick={() => {
-                    setSubmitted(false);
-                    setFormData({ name: '', email: '', message: '' });
-                  }}
-                >
-                  Ouvrir une nouvelle session
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="contact-form">
-                <div className="form-group-cyber">
-                  <label className="form-label-cyber">Sender Name [Identité]</label>
-                  <input 
-                    type="text" 
-                    className="form-input-cyber"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="ex: Jean Dupont"
-                    required
-                  />
-                </div>
-
-                <div className="form-group-cyber">
-                  <label className="form-label-cyber">Sender Email [Canal de retour]</label>
-                  <input 
-                    type="email" 
-                    className="form-input-cyber"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="ex: jean.dupont@sec-agency.com"
-                    required
-                  />
-                </div>
-
-                <div className="form-group-cyber">
-                  <label className="form-label-cyber">Encrypted Payload [Message]</label>
-                  <textarea 
-                    className="form-input-cyber"
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder="Saisissez votre message ici..."
-                    required
-                  />
-                </div>
-
-                <button type="submit" className="cyber-btn">
-                  <Send size={14} />
-                  Transmettre le rapport
-                </button>
-              </form>
-            )}
           </div>
         </div>
       </div>

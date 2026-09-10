@@ -1,11 +1,11 @@
 /**
  * Service API Cybersécurité - Extraction du flux CISA KEV (Known Exploited Vulnerabilities)
- * et renseignement sur les menaces en temps réel.
+ * et renseignement sur les menaces en temps réel via le backend Spring Boot.
  */
 
-const CISA_KEV_URL = 'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json';
+const BACKEND_CISA_URL = 'http://localhost:8080/api/cve/cisa';
 
-// Fallback d'urgence avec de vraies CVEs récentes au cas où CISA est inaccessible
+// Fallback d'urgence avec de vraies CVEs récentes au cas où le backend ou CISA est inaccessible
 const FALLBACK_CVES = [
   {
     cveID: 'CVE-2024-30080',
@@ -51,10 +51,17 @@ const FALLBACK_CVES = [
 
 export async function fetchLiveCISAAlerts() {
   try {
-    const response = await fetch(CISA_KEV_URL, { cache: 'no-store' });
+    const response = await fetch(BACKEND_CISA_URL, { cache: 'no-store' });
+    
     if (!response.ok) {
+      if (response.status === 401) throw new Error("Erreur 401: Non autorisé");
+      if (response.status === 403) throw new Error("Erreur 403: Accès refusé");
+      if (response.status === 404) throw new Error("Erreur 404: Endpoint introuvable");
+      if (response.status === 502) throw new Error("API CISA indisponible (502 Bad Gateway)");
+      if (response.status >= 500) throw new Error(`Erreur ${response.status}: Erreur serveur backend`);
       throw new Error(`HTTP Error: ${response.status}`);
     }
+    
     const data = await response.json();
     if (data && Array.isArray(data.vulnerabilities) && data.vulnerabilities.length > 0) {
       // Formater et retourner les 25 vulnérabilités les plus récentes
@@ -72,11 +79,15 @@ export async function fetchLiveCISAAlerts() {
       }));
     }
   } catch (error) {
-    console.warn('[cveApi] Impossible d\'atteindre l\'API CISA en direct, utilisation des données d\'urgence:', error);
+    if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+      console.warn('[cveApi] Erreur réseau ou CORS: Impossible de joindre le backend Spring Boot.', error);
+    } else {
+      console.warn(`[cveApi] Erreur lors de l'appel à CISA via backend: ${error.message}`, error);
+    }
   }
-  return FALLBACK_CVES;
+  return FALLBACK_CVES; // Return fallback silently but correctly logged
 }
 
 export function getNvdUrl(cveID) {
-  return `https://nvd.nist.gov/vuln/detail/${encodeURIComponent(cveID)}`;
+  return "https://nvd.nist.gov/vuln/detail/" + encodeURIComponent(cveID);
 }

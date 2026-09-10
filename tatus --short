@@ -1,0 +1,78 @@
+[1mdiff --git a/src/App.jsx b/src/App.jsx[m
+[1mindex bd0417a..6cf3d2d 100644[m
+[1m--- a/src/App.jsx[m
+[1m+++ b/src/App.jsx[m
+[36m@@ -7,9 +7,10 @@[m [mimport Skills from './components/Skills';[m
+ import Projects from './components/Projects';[m
+ import Certificates from './components/Certificates';[m
+ import About from './components/About';[m
+[32m+[m[32mimport Contact from './components/Contact';[m
+ import Veille from './components/Veille';[m
+ import { initTheme } from './utils/theme';[m
+[31m-import { loadProjects, saveProject, deleteProject, loadCerts, saveCert, deleteCert } from './services/cloudDb';[m
+[32m+[m[32mimport { loadProjects, loadCerts } from './services/apiService';[m
+ [m
+ function App() {[m
+   const [activeTab, setActiveTab] = useState('home');[m
+[36m@@ -21,33 +22,22 @@[m [mfunction App() {[m
+ [m
+     // Async load from Cloud DB / LocalStorage Hybrid[m
+     async function initData() {[m
+[31m-      const p = await loadProjects();[m
+[31m-      const c = await loadCerts();[m
+[31m-      setProjects(p);[m
+[31m-      setCerts(c);[m
+[32m+[m[32m      try {[m
+[32m+[m[32m        const p = await loadProjects();[m
+[32m+[m[32m        const c = await loadCerts();[m
+[32m+[m[32m        setProjects(p || []);[m
+[32m+[m[32m        setCerts(c || []);[m
+[32m+[m[32m      } catch (err) {[m
+[32m+[m[32m        console.error("Erreur de chargement des données depuis l'API:", err.message);[m
+[32m+[m[32m        // Fallback or empty state[m
+[32m+[m[32m        setProjects([]);[m
+[32m+[m[32m        setCerts([]);[m
+[32m+[m[32m      }[m
+     }[m
+     initData();[m
+   }, []);[m
+ [m
+[31m-  const addProject = async (newProject) => {[m
+[31m-    const updated = await saveProject(newProject);[m
+[31m-    setProjects(updated);[m
+[31m-  };[m
+[31m-[m
+[31m-  const removeProject = async (id) => {[m
+[31m-    const updated = await deleteProject(id);[m
+[31m-    setProjects(updated);[m
+[31m-  };[m
+[31m-[m
+[31m-  const addCert = async (newCert) => {[m
+[31m-    const updated = await saveCert(newCert);[m
+[31m-    setCerts(updated);[m
+[31m-  };[m
+[31m-[m
+[31m-  const removeCert = async (id) => {[m
+[31m-    const updated = await deleteCert(id);[m
+[31m-    setCerts(updated);[m
+[31m-  };[m
+[32m+[m[32m  // Functions like addProject, removeProject are moved to Admin dashboard[m
+ [m
+   const renderActiveComponent = () => {[m
+     switch (activeTab) {[m
+[36m@@ -56,11 +46,13 @@[m [mfunction App() {[m
+       case 'skills':[m
+         return <Skills />;[m
+       case 'projects':[m
+[31m-        return <Projects projects={projects} addProject={addProject} deleteProject={removeProject} />;[m
+[32m+[m[32m        return <Projects projects={projects} />;[m
+       case 'certificates':[m
+[31m-        return <Certificates certs={certs} addCert={addCert} deleteCert={removeCert} />;[m
+[32m+[m[32m        return <Certificates certs={certs} />;[m
+       case 'about':[m
+         return <About />;[m
+[32m+[m[32m      case 'contact':[m
+[32m+[m[32m        return <Contact />;[m
+       case 'veille':[m
+         return <Veille />;[m
+       default:[m

@@ -23,6 +23,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'projects', label: 'Projets' },
     { id: 'certificates', label: 'Certificats' },
     { id: 'about', label: 'À propos' },
+    { id: 'contact', label: 'Contact' },
     { id: 'veille', label: 'Veille' }
   ];
 

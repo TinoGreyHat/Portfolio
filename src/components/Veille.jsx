@@ -9,7 +9,7 @@ export default function Veille() {
   const [cisaAlerts, setCisaAlerts] = useState([]);
   const [isLoadingCisa, setIsLoadingCisa] = useState(true);
   const [logs, setLogs] = useState([]);
-  const logsEndRef = useRef(null);
+  const logsBodyRef = useRef(null);
 
   // Load live CISA alerts
   const loadCisaData = async () => {
@@ -69,7 +69,12 @@ export default function Veille() {
 
   // Auto-scroll logs
   useEffect(() => {
-    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (logsBodyRef.current) {
+      logsBodyRef.current.scrollTo({
+        top: logsBodyRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [logs]);
 
   // Filters
@@ -113,7 +118,7 @@ export default function Veille() {
               </span>
             </div>
 
-            <div className="soc-body">
+            <div className="soc-body" ref={logsBodyRef}>
               <div style={{ color: 'var(--accent)', borderBottom: '1px solid rgba(0,232,155,0.1)', paddingBottom: '8px', marginBottom: '8px' }}>
                 [+] Live Ingestion Active. Interrogation du flux CISA KEV (Known Exploited Vulnerabilities)...
               </div>
@@ -125,7 +130,6 @@ export default function Veille() {
                   <span className="log-content">{log.content}</span>
                 </div>
               ))}
-              <div ref={logsEndRef} />
             </div>
           </div>
         </div>

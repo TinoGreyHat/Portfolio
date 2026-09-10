@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mail, FileText, Award, Briefcase, Code2, ShieldAlert } from 'lucide-react';
 import Terminal from './Terminal';
 
@@ -53,6 +53,47 @@ export default function Home({ setActiveTab, projects, certs }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [loopNum, setLoopNum] = useState(0);
   const [typingSpeed, setTypingSpeed] = useState(150);
+
+  const statsRef = useRef(null);
+  const [projectsCount, setProjectsCount] = useState(0);
+  const [certsCount, setCertsCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !hasAnimated) {
+        setHasAnimated(true);
+        let pCount = 0;
+        let cCount = 0;
+        const interval = setInterval(() => {
+          let updated = false;
+          if (pCount < 4) {
+            pCount++;
+            setProjectsCount(pCount);
+            updated = true;
+          }
+          if (cCount < 3) {
+            cCount++;
+            setCertsCount(cCount);
+            updated = true;
+          }
+          if (!updated) {
+            clearInterval(interval);
+          }
+        }, 300);
+      }
+    }, { threshold: 0.2 });
+
+    if (statsRef.current) {
+      observer.observe(statsRef.current);
+    }
+
+    return () => {
+      if (statsRef.current) {
+        observer.unobserve(statsRef.current);
+      }
+    };
+  }, [hasAnimated]);
 
   useEffect(() => {
     let handle = setTimeout(() => {
@@ -181,7 +222,7 @@ export default function Home({ setActiveTab, projects, certs }) {
       </section>
 
       {/* Stats row */}
-      <section className="stats-container">
+      <section className="stats-container" ref={statsRef}>
         <div className="stat-card glass-panel">
           <div className="stat-icon-wrapper">
             <ShieldAlert size={24} />
@@ -197,7 +238,7 @@ export default function Home({ setActiveTab, projects, certs }) {
             <Briefcase size={24} />
           </div>
           <div>
-            <div className="stat-number">4+</div>
+            <div className="stat-number">+{projectsCount}</div>
             <div className="stat-label">Projets Cyber</div>
           </div>
         </div>
@@ -207,7 +248,7 @@ export default function Home({ setActiveTab, projects, certs }) {
             <Award size={24} />
           </div>
           <div>
-            <div className="stat-number">3+</div>
+            <div className="stat-number">+{certsCount}</div>
             <div className="stat-label">Certifications</div>
           </div>
         </div>

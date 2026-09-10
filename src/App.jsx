@@ -7,9 +7,10 @@ import Skills from './components/Skills';
 import Projects from './components/Projects';
 import Certificates from './components/Certificates';
 import About from './components/About';
+import Contact from './components/Contact';
 import Veille from './components/Veille';
 import { initTheme } from './utils/theme';
-import { loadProjects, saveProject, deleteProject, loadCerts, saveCert, deleteCert } from './services/cloudDb';
+import { loadProjects, loadCerts } from './services/apiService';
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -21,33 +22,22 @@ function App() {
 
     // Async load from Cloud DB / LocalStorage Hybrid
     async function initData() {
-      const p = await loadProjects();
-      const c = await loadCerts();
-      setProjects(p);
-      setCerts(c);
+      try {
+        const p = await loadProjects();
+        const c = await loadCerts();
+        setProjects(p || []);
+        setCerts(c || []);
+      } catch (err) {
+        console.error("Erreur de chargement des données depuis l'API:", err.message);
+        // Fallback or empty state
+        setProjects([]);
+        setCerts([]);
+      }
     }
     initData();
   }, []);
 
-  const addProject = async (newProject) => {
-    const updated = await saveProject(newProject);
-    setProjects(updated);
-  };
-
-  const removeProject = async (id) => {
-    const updated = await deleteProject(id);
-    setProjects(updated);
-  };
-
-  const addCert = async (newCert) => {
-    const updated = await saveCert(newCert);
-    setCerts(updated);
-  };
-
-  const removeCert = async (id) => {
-    const updated = await deleteCert(id);
-    setCerts(updated);
-  };
+  // Functions like addProject, removeProject are moved to Admin dashboard
 
   const renderActiveComponent = () => {
     switch (activeTab) {
@@ -56,11 +46,13 @@ function App() {
       case 'skills':
         return <Skills />;
       case 'projects':
-        return <Projects projects={projects} addProject={addProject} deleteProject={removeProject} />;
+        return <Projects projects={projects} />;
       case 'certificates':
-        return <Certificates certs={certs} addCert={addCert} deleteCert={removeCert} />;
+        return <Certificates certs={certs} />;
       case 'about':
         return <About />;
+      case 'contact':
+        return <Contact />;
       case 'veille':
         return <Veille />;
       default:

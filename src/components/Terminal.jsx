@@ -14,7 +14,7 @@ export default function Terminal({ projects: propProjects, certs: propCerts }) {
   const [input, setInput] = useState("");
   const [cmdHistory, setCmdHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const terminalEndRef = useRef(null);
+  const terminalBodyRef = useRef(null);
   const inputRef = useRef(null);
 
   // Read live data: props first, then localStorage, then static fallbacks
@@ -201,7 +201,12 @@ export default function Terminal({ projects: propProjects, certs: propCerts }) {
   };
 
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (terminalBodyRef.current) {
+      terminalBodyRef.current.scrollTo({
+        top: terminalBodyRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [history]);
 
   return (
@@ -219,7 +224,7 @@ export default function Terminal({ projects: propProjects, certs: propCerts }) {
         </div>
       </div>
 
-      <div className="terminal-body">
+      <div className="terminal-body" ref={terminalBodyRef}>
         {history.map((line, idx) => (
           <div key={idx} className="term-output-line">
             {line}
@@ -241,7 +246,6 @@ export default function Terminal({ projects: propProjects, certs: propCerts }) {
             placeholder="entrez une commande..."
           />
         </form>
-        <div ref={terminalEndRef} />
       </div>
     </div>
   );
