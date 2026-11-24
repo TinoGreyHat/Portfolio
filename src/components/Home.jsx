@@ -1,6 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Mail, FileText, Award, Briefcase, Code2, ShieldAlert } from 'lucide-react';
 import Terminal from './Terminal';
+import { useI18n } from '../contexts/I18nContext';
+import { loadProjects, loadCerts } from '../services/apiService';
 
 // Inline SVG components to bypass missing brand icons in the registry's lucide-react version
 const Github = (props) => (
@@ -41,14 +44,9 @@ const Linkedin = (props) => (
 );
 
 
-const TITLES = [
-  "Analyste SOC & Blue Team Specialist",
-  "Threat Hunter & Expert Wazuh SIEM",
-  "Spécialiste en Détection d'Incidents & Hardening",
-  "Security Engineer & Analyse de Logs (Syslog/ELK)"
-];
-
-export default function Home({ setActiveTab, projects, certs }) {
+export default function Home() {
+  const { t, isReady } = useI18n();
+  const navigate = useNavigate();
   const [text, setText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [loopNum, setLoopNum] = useState(0);
@@ -58,6 +56,34 @@ export default function Home({ setActiveTab, projects, certs }) {
   const [projectsCount, setProjectsCount] = useState(0);
   const [certsCount, setCertsCount] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [certs, setCerts] = useState([]);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const [p, c] = await Promise.all([loadProjects(), loadCerts()]);
+        setProjects(p || []);
+        setCerts(c || []);
+      } catch (err) {
+        console.error("Erreur de chargement des données:", err.message);
+        setError(err.message);
+        setProjects([]);
+        setCerts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Get translated titles with fallback for when translations aren't ready yet
+  const TITLES = useMemo(() => (isReady ? t('home.titles') : []), [isReady, t]);
+  // Get translated badges with fallback for when translations aren't ready yet
+  const BADGES = useMemo(() => (isReady ? t('home.badges') : []), [isReady, t]);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -84,18 +110,22 @@ export default function Home({ setActiveTab, projects, certs }) {
       }
     }, { threshold: 0.2 });
 
-    if (statsRef.current) {
-      observer.observe(statsRef.current);
+    const statsEl = statsRef.current;
+    if (statsEl) {
+      observer.observe(statsEl);
     }
 
     return () => {
-      if (statsRef.current) {
-        observer.unobserve(statsRef.current);
+      if (statsEl) {
+        observer.unobserve(statsEl);
       }
     };
   }, [hasAnimated]);
 
   useEffect(() => {
+    // Guard: don't run typing effect if TITLES is empty (translations not ready)
+    if (TITLES.length === 0) return;
+
     let handle = setTimeout(() => {
       const i = loopNum % TITLES.length;
       const fullTitle = TITLES[i];
@@ -119,7 +149,7 @@ export default function Home({ setActiveTab, projects, certs }) {
     }, typingSpeed);
 
     return () => clearTimeout(handle);
-  }, [text, isDeleting, loopNum, typingSpeed]);
+  }, [text, isDeleting, loopNum, typingSpeed, TITLES]);
 
   return (
     <div className="app-container" style={{ paddingTop: 0 }}>
@@ -128,9 +158,9 @@ export default function Home({ setActiveTab, projects, certs }) {
         {/* Left Column - Profile Card */}
         <div className="profile-card glass-panel">
           <div className="avatar-container">
-            <img 
-              src="./assets/img/etiam.jpg" 
-              alt="Photo de TETE Kokou Blaise Etiam" 
+            <img
+              src="./assets/img/etiam.jpg"
+              alt={t('home.profileName')}
               className="profile-avatar"
               onError={(e) => {
                 e.target.onerror = null;
@@ -140,77 +170,76 @@ export default function Home({ setActiveTab, projects, certs }) {
             <span className="avatar-badge">LVL.3</span>
           </div>
 
-          <h1 className="profile-name">TETE Kokou Blaise Etiam</h1>
-          <p className="profile-alias">alias TinoGreyHat</p>
-          
+          <h1 className="profile-name">{t('home.profileName')}</h1>
+          <p className="profile-alias">alias {t('home.profileAlias')}</p>
+
           <div className="typewriter-text">
-            <span>&gt; {text}</span>
+            <span>{'>'} {text}</span>
           </div>
 
           <p className="profile-bio">
-            Spécialisé en sécurité défensive (Blue Team / SOC) et supervision des infrastructures. 
-            Je conçois des règles de détection sur-mesure (Wazuh SIEM), analyse des journaux d'événements 
-            et automatise la réponse aux incidents (Active Response) pour protéger et durcir 
-            les systèmes face aux cybermenaces.
+            {t('home.bio')}
           </p>
 
           <div className="cyber-badges">
-            <span className="badge-item success">[ROLE: BLUE TEAM / SOC]</span>
-            <span className="badge-item">[SIEM: WAZUH / SPLUNK]</span>
-            <span className="badge-item">[HARDENING: LINUX / NET]</span>
+            {BADGES.map((badge, index) => (
+              <span key={index} className={`badge-item ${index === 0 ? 'success' : ''}`}>
+                {badge}
+              </span>
+            ))}
           </div>
 
           <div className="btn-container">
-            <a 
-              href="./assets/pdf/CV TINOGEYHAT .pdf" 
-              className="cyber-btn" 
-              target="_blank" 
+            <a
+              href="./assets/pdf/CV TINOGEYHAT .pdf"
+              className="cyber-btn"
+              target="_blank"
               rel="noreferrer"
             >
               <FileText size={16} />
-              Télécharger mon CV
+              {t('home.cta.downloadCV')}
             </a>
-            <button 
+            <button
               className="cyber-btn sec"
-              onClick={() => setActiveTab('about')}
+              onClick={() => navigate('/about')}
             >
               <Mail size={16} />
-              Me contacter
+              {t('home.cta.contactMe')}
             </button>
           </div>
 
           {/* Social icons */}
           <div style={{ display: 'flex', gap: '20px', marginTop: '24px' }}>
-            <a 
-              href="https://github.com/TinoGreyHat" 
-              target="_blank" 
+            <a
+              href="https://github.com/TinoGreyHat"
+              target="_blank"
               rel="noreferrer"
               style={{ color: 'var(--text-muted)', transition: 'color 0.3s' }}
               onMouseEnter={(e) => e.target.style.color = 'var(--accent)'}
               onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
-              aria-label="GitHub Profile"
+              aria-label={t('home.social.github')}
             >
               <Github size={22} />
             </a>
-            <a 
-              href="https://linkedin.com/in/tinogreyhat" 
-              target="_blank" 
+            <a
+              href="https://linkedin.com/in/tinogreyhat"
+              target="_blank"
               rel="noreferrer"
               style={{ color: 'var(--text-muted)', transition: 'color 0.3s' }}
               onMouseEnter={(e) => e.target.style.color = 'var(--accent)'}
               onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
-              aria-label="LinkedIn Profile"
+              aria-label={t('home.social.linkedin')}
             >
               <Linkedin size={22} />
             </a>
-            <a 
-              href="https://tryhackme.com/p/TinoGreyHat" 
-              target="_blank" 
+            <a
+              href="https://tryhackme.com/p/TinoGreyHat"
+              target="_blank"
               rel="noreferrer"
               style={{ color: 'var(--text-muted)', transition: 'color 0.3s' }}
               onMouseEnter={(e) => e.target.style.color = 'var(--accent)'}
               onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
-              aria-label="TryHackMe Profile"
+              aria-label={t('home.social.tryhackme')}
             >
               <ShieldAlert size={22} />
             </a>
@@ -229,7 +258,7 @@ export default function Home({ setActiveTab, projects, certs }) {
           </div>
           <div>
             <div className="stat-number">Top 4%</div>
-            <div className="stat-label">TryHackMe Rank</div>
+            <div className="stat-label">{t('home.stats.tryhackme')}</div>
           </div>
         </div>
 
@@ -239,7 +268,7 @@ export default function Home({ setActiveTab, projects, certs }) {
           </div>
           <div>
             <div className="stat-number">+{projectsCount}</div>
-            <div className="stat-label">Projets Cyber</div>
+            <div className="stat-label">{t('home.stats.cyberProjects')}</div>
           </div>
         </div>
 
@@ -249,7 +278,7 @@ export default function Home({ setActiveTab, projects, certs }) {
           </div>
           <div>
             <div className="stat-number">+{certsCount}</div>
-            <div className="stat-label">Certifications</div>
+            <div className="stat-label">{t('home.stats.certificationsShort')}</div>
           </div>
         </div>
 
@@ -259,7 +288,7 @@ export default function Home({ setActiveTab, projects, certs }) {
           </div>
           <div>
             <div className="stat-number">Python/Bash</div>
-            <div className="stat-label">Langages Favoris</div>
+            <div className="stat-label">{t('home.stats.languages')}</div>
           </div>
         </div>
       </section>

@@ -128,7 +128,16 @@ export default function NetworkBackground() {
       };
 
       const drawMatrix = () => {
-        ctx.fillStyle = 'rgba(5, 7, 12, 0.08)';
+        // Get computed background color for trail
+        const bgColor = getComputedStyle(document.documentElement)
+          .getPropertyValue('--bg-cyber')
+          .trim() || '#05070c';
+        // Convert to rgba for trail effect
+        const trailColor = bgColor.startsWith('#')
+          ? `rgba(${parseInt(bgColor.slice(1,3),16)}, ${parseInt(bgColor.slice(3,5),16)}, ${parseInt(bgColor.slice(5,7),16)}, 0.08)`
+          : 'rgba(5, 7, 12, 0.08)';
+
+        ctx.fillStyle = trailColor;
         ctx.fillRect(0, 0, width, height);
 
         const accent = getComputedStyle(document.documentElement)

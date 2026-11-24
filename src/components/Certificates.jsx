@@ -1,32 +1,61 @@
-import { useState } from 'react';
-import { Award, ExternalLink, Lock, Unlock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Award, ExternalLink, Lock, Unlock, ArrowLeft } from 'lucide-react';
+import { useI18n } from '../contexts/I18nContext';
+import { useNavigate } from 'react-router-dom';
+import { loadCerts } from '../services/apiService';
 
 // Read-only Certificates component
 
-export default function Certificates({ certs }) {
+export default function Certificates() {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const handleBack = () => navigate('/');
+  const [certs, setCerts] = useState([]);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchCerts() {
+      try {
+        setLoading(true);
+        const data = await loadCerts();
+        setCerts(data || []);
+      } catch (err) {
+        console.error("Erreur de chargement des certifications:", err.message);
+        setError(err.message);
+        setCerts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCerts();
+  }, []);
 
   return (
     <section className="section-container reveal visible">
       <div className="section-header">
+        <button className="page-back-btn" onClick={handleBack} aria-label={t('common.back')}>
+          <ArrowLeft size={18} />
+          <span>{t('common.back')}</span>
+        </button>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <h2 className="section-title">
             <Award className="title-icon" size={28} />
-            Certifications & Formations
+            {t('certificates.sectionTitle')}
             <div className="title-line"></div>
           </h2>
         </div>
         <p className="section-desc">
-          Une vue d'ensemble des parcours académiques, des accréditations professionnelles
-          et des cursus spécialisés en cybersécurité validés ou en cours d'acquisition.
+          {t('certificates.sectionDesc')}
           <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontSize: '0.8rem', marginLeft: 8 }}>
-            [{certs.length} certification{certs.length !== 1 ? 's' : ''}]
+            {t('certificates.certCount', { count: certs.length })}
           </span>
         </p>
       </div>
 
       {certs.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-          <p style={{ marginBottom: 8 }}>Aucune certification enregistrée.</p>
+          <p style={{ marginBottom: 8 }}>{t('certificates.noCerts')}</p>
         </div>
       ) : (
         <div className="certs-grid">
@@ -36,12 +65,12 @@ export default function Certificates({ certs }) {
                 {cert.status === 'COMPLETED' ? (
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Unlock size={12} />
-                    [VERIFIED: CLEARANCE]
+                    {t('certificates.badgeVerified')}
                   </span>
                 ) : (
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Lock size={12} />
-                    [ACQUISITION: IN PROGRESS]
+                    {t('certificates.badgeInProgress')}
                   </span>
                 )}
               </span>
@@ -67,7 +96,7 @@ export default function Certificates({ certs }) {
                       rel="noreferrer"
                       className="cert-verify-link"
                     >
-                      Vérifier
+                      {t('certificates.verify')}
                       <ExternalLink size={12} />
                     </a>
                   )}

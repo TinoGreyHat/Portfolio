@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { Activity, Globe, ExternalLink, Search, ShieldAlert, RefreshCw } from 'lucide-react';
-import { sourcesVeille, simulatedAlerts } from '../data/veille';
+import { useI18n } from '../contexts/I18nContext';
+import { useNavigate } from 'react-router-dom';
+import { Activity, Globe, ExternalLink, Search, ShieldAlert, RefreshCw, ArrowLeft } from 'lucide-react';
+import { veilleData } from '../locales/';
 import { fetchLiveCISAAlerts, getNvdUrl } from '../services/cveApi';
 
 export default function Veille() {
+  const { t, lang } = useI18n();
+  const navigate = useNavigate();
+  const handleBack = () => navigate('/');
   const [activeTab, setActiveTab] = useState('cisa'); // 'cisa' or 'sources'
   const [searchTerm, setSearchTerm] = useState('');
   const [cisaAlerts, setCisaAlerts] = useState([]);
@@ -25,7 +30,7 @@ export default function Veille() {
 
   // Initialize SOC logs
   useEffect(() => {
-    const shuffled = [...simulatedAlerts].sort(() => 0.5 - Math.random());
+    const shuffled = [...veilleData[lang].alerts].sort(() => 0.5 - Math.random());
     const initial = shuffled.slice(0, 6).map((item, idx) => {
       const d = new Date();
       d.setMinutes(d.getMinutes() - (6 - idx) * 3);
@@ -33,7 +38,7 @@ export default function Veille() {
       return { ...item, time: timeStr };
     });
     setLogs(initial);
-  }, []);
+  }, [lang]);
 
   // Real-time threat ingestion feed (combining live CISA + simulated alerts)
   useEffect(() => {
@@ -51,7 +56,7 @@ export default function Veille() {
           content: `[${randomCisa.cveID}] ${randomCisa.vendorProject} ${randomCisa.product} - ${randomCisa.vulnerabilityName.slice(0, 75)}...`
         };
       } else {
-        const randomSim = simulatedAlerts[Math.floor(Math.random() * simulatedAlerts.length)];
+        const randomSim = veilleData[lang].alerts[Math.floor(Math.random() * veilleData[lang].alerts.length)];
         newLog = { ...randomSim, time: timeStr };
       }
 
@@ -65,7 +70,7 @@ export default function Veille() {
     }, 3200);
 
     return () => clearInterval(interval);
-  }, [cisaAlerts]);
+  }, [cisaAlerts, lang]);
 
   // Auto-scroll logs
   useEffect(() => {
@@ -78,7 +83,7 @@ export default function Veille() {
   }, [logs]);
 
   // Filters
-  const filteredSources = sourcesVeille.filter(source =>
+  const filteredSources = veilleData[lang].sources.filter(source =>
     source.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     source.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -93,14 +98,17 @@ export default function Veille() {
   return (
     <section className="section-container reveal visible">
       <div className="section-header">
+        <button className="page-back-btn" onClick={handleBack} aria-label={t('common.back')}>
+          <ArrowLeft size={18} />
+          <span>{t('common.back')}</span>
+        </button>
         <h2 className="section-title">
           <Activity className="title-icon" size={28} />
-          Veille Technologique & Cyber-Renseignement
+          {t('veille.sectionTitle')}
           <div className="title-line"></div>
         </h2>
         <p className="section-desc">
-          Supervision en direct des vulnérabilités exploitées dans le monde (Flux officiel CISA KEV & NIST NVD), 
-          analyses d'incidents et curation des meilleures sources cyber.
+          {t('veille.sectionDesc')}
         </p>
       </div>
 
@@ -111,16 +119,16 @@ export default function Veille() {
             <div className="soc-header">
               <div className="soc-status-indicator">
                 <span className="status-dot-blink"></span>
-                <span>CYBER_THREAT_INTEL_MONITOR (LIVE_CISA_FEED)</span>
+                <span>{t('veille.monitorTitle')}</span>
               </div>
               <span style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-                RATE: ~0.3 EPS
+                {t('veille.monitorRate')}
               </span>
             </div>
 
             <div className="soc-body" ref={logsBodyRef}>
-              <div style={{ color: 'var(--accent)', borderBottom: '1px solid rgba(0,232,155,0.1)', paddingBottom: '8px', marginBottom: '8px' }}>
-                [+] Live Ingestion Active. Interrogation du flux CISA KEV (Known Exploited Vulnerabilities)...
+              <div style={{ color: 'var(--accent)', borderBottom: '1px solid var(--accent-subtle)', paddingBottom: '8px', marginBottom: '8px' }}>
+                {t('veille.liveIngestionActive')}
               </div>
 
               {logs.map((log, idx) => (
@@ -144,7 +152,7 @@ export default function Veille() {
               onClick={() => setActiveTab('cisa')}
             >
               <ShieldAlert size={14} />
-              CISA KEV Live ({cisaAlerts.length})
+              {t('veille.tabs.cisa')} ({cisaAlerts.length})
             </button>
             <button
               className={`cyber-btn ${activeTab === 'sources' ? '' : 'sec'}`}
@@ -152,7 +160,7 @@ export default function Veille() {
               onClick={() => setActiveTab('sources')}
             >
               <Globe size={14} />
-              Sources & Feeds ({sourcesVeille.length})
+              {t('veille.tabs.sources')} ({veilleData[lang].sources.length})
             </button>
           </div>
 
@@ -161,7 +169,7 @@ export default function Veille() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              background: 'rgba(0,0,0,0.15)',
+              background: 'var(--bg-input)',
               border: '1px solid var(--border-cyber)',
               borderRadius: '4px',
               padding: '6px 12px',
@@ -172,7 +180,7 @@ export default function Veille() {
             <Search size={16} style={{ color: 'var(--text-muted)' }} />
             <input
               type="text"
-              placeholder={activeTab === 'cisa' ? "Filtrer par CVE, éditeur, produit..." : "Filtrer les sources..."}
+              placeholder={activeTab === 'cisa' ? t('veille.searchPlaceholder.cisa') : t('veille.searchPlaceholder.sources')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
@@ -188,7 +196,7 @@ export default function Veille() {
             {activeTab === 'cisa' && (
               <button
                 onClick={loadCisaData}
-                title="Actualiser le flux CISA"
+                title={t('veille.refreshTooltip')}
                 style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer' }}
               >
                 <RefreshCw size={14} className={isLoadingCisa ? 'spin' : ''} />
@@ -201,7 +209,7 @@ export default function Veille() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {isLoadingCisa ? (
                 <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                  Chargement du flux officiel CISA KEV en direct...
+                  {t('veille.loadingCisa')}
                 </div>
               ) : (
                 filteredCisa.map((cve, idx) => (
@@ -219,13 +227,13 @@ export default function Veille() {
                         <ExternalLink size={12} />
                       </a>
                       <span className="source-meta-tag" style={{ borderColor: cve.severity === 'CRITICAL' ? 'var(--red)' : 'var(--accent)' }}>
-                        Ajouté: {cve.dateAdded}
+                        {cve.dateAdded}
                       </span>
                     </div>
                     <h4 style={{ fontSize: '0.9rem', margin: '6px 0', color: 'var(--text-main)' }}>{cve.vulnerabilityName}</h4>
                     <p className="source-desc">{cve.shortDescription}</p>
-                    <div style={{ marginTop: '10px', padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}>
-                      <span style={{ color: 'var(--accent)' }}>ACTION REQUISE:</span> {cve.requiredAction}
+                    <div style={{ marginTop: '10px', padding: '8px', background: 'var(--accent-subtle)', borderRadius: '4px', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}>
+                      <span style={{ color: 'var(--accent)' }}>{t('veille.actionRequired')}</span> {cve.requiredAction}
                     </div>
                   </div>
                 ))
@@ -233,7 +241,7 @@ export default function Veille() {
 
               {!isLoadingCisa && filteredCisa.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                  Aucune alerte CVE ne correspond à votre recherche.
+                  {t('veille.noCisaResults')}
                 </div>
               )}
             </div>
@@ -259,7 +267,7 @@ export default function Veille() {
                   </div>
                   <p className="source-desc">{source.description}</p>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '12px', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>IMPACT:</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{t('veille.sourceFrequency')}</span>
                     <span style={{ color: 'var(--cyan)' }}>{source.impact}</span>
                   </div>
                 </div>
@@ -267,7 +275,7 @@ export default function Veille() {
 
               {filteredSources.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                  Aucune source de veille ne correspond à votre recherche.
+                  {t('veille.noSourceResults')}
                 </div>
               )}
             </div>

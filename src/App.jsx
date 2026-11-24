@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import NetworkBackground from './components/NetworkBackground';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import { useLocation } from 'react-router-dom';
 import Home from './components/Home';
 import Skills from './components/Skills';
 import Projects from './components/Projects';
@@ -13,14 +11,13 @@ import { initTheme } from './utils/theme';
 import { loadProjects, loadCerts } from './services/apiService';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home');
+  const location = useLocation();
   const [projects, setProjects] = useState([]);
   const [certs, setCerts] = useState([]);
 
   useEffect(() => {
     initTheme();
 
-    // Async load from Cloud DB / LocalStorage Hybrid
     async function initData() {
       try {
         const p = await loadProjects();
@@ -29,7 +26,6 @@ function App() {
         setCerts(c || []);
       } catch (err) {
         console.error("Erreur de chargement des données depuis l'API:", err.message);
-        // Fallback or empty state
         setProjects([]);
         setCerts([]);
       }
@@ -37,40 +33,29 @@ function App() {
     initData();
   }, []);
 
-  // Functions like addProject, removeProject are moved to Admin dashboard
-
-  const renderActiveComponent = () => {
-    switch (activeTab) {
-      case 'home':
-        return <Home setActiveTab={setActiveTab} projects={projects} certs={certs} />;
-      case 'skills':
+  // Determine which component to render based on route
+  const getActiveComponent = () => {
+    const pathname = location.pathname;
+    switch (pathname) {
+      case '/skills':
         return <Skills />;
-      case 'projects':
+      case '/projects':
         return <Projects projects={projects} />;
-      case 'certificates':
+      case '/certificates':
         return <Certificates certs={certs} />;
-      case 'about':
+      case '/about':
         return <About />;
-      case 'contact':
+      case '/contact':
         return <Contact />;
-      case 'veille':
+      case '/veille':
         return <Veille />;
+      case '/':
       default:
-        return <Home setActiveTab={setActiveTab} projects={projects} certs={certs} />;
+        return <Home projects={projects} certs={certs} />;
     }
   };
 
-  return (
-    <>
-      <NetworkBackground />
-      <div className="cyber-grid" />
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="app-container">
-        {renderActiveComponent()}
-      </main>
-      <Footer />
-    </>
-  );
+  return <>{getActiveComponent()}</>;
 }
 
 export default App;

@@ -1,29 +1,36 @@
-import { User, BookOpen } from 'lucide-react';
+import { useI18n } from '../contexts/I18nContext';
+import { useNavigate } from 'react-router-dom';
+import { User, BookOpen, ArrowLeft } from 'lucide-react';
 
 export default function About() {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+
+  const handleBack = () => navigate('/');
+
   const timelineData = [
     {
       date: "2023 - 2026",
-      title: "Spécialisation Cybersécurité & Hacking Éthique",
-      desc: "Cursus supérieur axé sur la sécurité des SI, l'architecture réseau sécurisée, l'audit de code, la cryptographie et la gestion des risques cyber (NIST / ISO 27001).",
+      title: t('about.timeline[0].title'),
+      desc: t('about.timeline[0].desc'),
       active: true
     },
     {
-      date: "Décembre 2024",
-      title: "Google Cybersecurity Professional",
-      desc: "Certification technique validant l'analyse avancée de paquets (Wireshark), la détection SIEM (Splunk, Chronicle), le scripting Python de sécurité et la conformité aux frameworks.",
+      date: "December 2024",
+      title: t('about.timeline[1].title'),
+      desc: t('about.timeline[1].desc'),
       active: true
     },
     {
-      date: "Début 2025",
-      title: "Laboratoires SOC & Détection Wazuh SIEM",
-      desc: "Conception d'un lab de Threat Hunting. Déploiement d'agents de supervision, écriture de règles XML sur-mesure pour détection de bruteforce et riposte Active Response.",
+      date: "Early 2025",
+      title: t('about.timeline[2].title'),
+      desc: t('about.timeline[2].desc'),
       active: true
     },
     {
       date: "2025 - 2026",
-      title: "OffSec PEN-100 & Stage Pentest / SOC",
-      desc: "Préparation active aux fondations de l'OSCP (PEN-100) et recherche d'un stage ou d'une alternance en Sécurité Offensive (Pentest) ou Analyse SOC.",
+      title: t('about.timeline[3].title'),
+      desc: t('about.timeline[3].desc'),
       active: false
     }
   ];
@@ -31,34 +38,34 @@ export default function About() {
   return (
     <section className="section-container reveal visible about-page-wrapper">
       <div className="section-header">
+        <button className="page-back-btn" onClick={handleBack} aria-label={t('common.back')}>
+          <ArrowLeft size={18} />
+          <span>{t('common.back')}</span>
+        </button>
         <h2 className="section-title">
           <User className="title-icon" size={28} />
-          À Propos de moi
+          {t('about.sectionTitle')}
           <div className="title-line"></div>
         </h2>
         <p className="section-desc">
-          Mon parcours, mes objectifs professionnels et mes laboratoires de recherche.
+          {t('about.sectionDesc')}
         </p>
       </div>
 
       <div className="about-layout" style={{ gridTemplateColumns: '1fr', maxWidth: '800px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-          <div className="about-intro-text">
-            <p>
-              Je m'appelle <strong>TETE Kokou Blaise Etiam</strong> (alias <strong>TinoGreyHat</strong>). Praticien passionné de sécurité défensive (Blue Team & SOC), je suis spécialisé dans la supervision SIEM (Wazuh, Splunk), la recherche de menaces (Threat Hunting), l'analyse de logs et le durcissement des systèmes.
-            </p>
-            <p>
-              Ma philosophie s'ancre dans la <em>vigilance proactive & la défense en profondeur</em> : surveiller les flux en continu, corrélera les signaux faibles et automatiser les réponses aux incidents (Active Response) pour neutraliser les attaques dès les premières étapes du Kill Chain.
-            </p>
+          <div id="formation" className="about-intro-text">
+            <p dangerouslySetInnerHTML={{ __html: t('about.intro1') }} />
+            <p dangerouslySetInnerHTML={{ __html: t('about.intro2') }} />
             <div className="about-highlight-box">
-              "Surveiller l'invisible, corréler les événements de sécurité et immuniser les infrastructures face aux menaces émergentes."
+              {t('about.highlightQuote')}
             </div>
           </div>
 
-          <div>
+          <div id="experiences">
             <h3 className="timeline-title-sub">
               <BookOpen size={20} />
-              Cursus & Jalons
+              {t('about.timelineTitle')}
             </h3>
             <div className="timeline-vertical">
               {timelineData.map((node, index) => (

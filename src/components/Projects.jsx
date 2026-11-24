@@ -1,5 +1,8 @@
-import { useState } from 'react';
-import { FolderGit2, X, Calendar, Shield, Activity, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FolderGit2, X, Calendar, Shield, Activity, Search, ArrowLeft } from 'lucide-react';
+import { useI18n } from '../contexts/I18nContext';
+import { useNavigate } from 'react-router-dom';
+import { loadProjects } from '../services/apiService';
 
 // Inline SVG component to bypass missing brand icons in the registry's lucide-react version
 const Github = (props) => (
@@ -20,25 +23,41 @@ const Github = (props) => (
   </svg>
 );
 
-const CATEGORY_OPTIONS = [
-  { value: 'pentest', label: 'Sécurité Offensive (Pentest)' },
-  { value: 'defensive', label: 'Sécurité Défensive (Blue Team)' },
-  { value: 'scripting', label: 'Scripting & Automatisation' },
-  { value: 'reverse', label: 'Reverse Engineering' },
-];
-
 // Read-only Projects Component
 
-export default function Projects({ projects }) {
+export default function Projects() {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const handleBack = () => navigate('/');
+  const [projects, setProjects] = useState([]);
   const [filter, setFilter] = useState('all');
   const [selectedProject, setSelectedProject] = useState(null);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        setLoading(true);
+        const data = await loadProjects();
+        setProjects(data || []);
+      } catch (err) {
+        console.error("Erreur de chargement des projets:", err.message);
+        setError(err.message);
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProjects();
+  }, []);
 
   const categories = [
-    { id: 'all', label: 'Tout' },
-    { id: 'pentest', label: 'Sécurité Offensive' },
-    { id: 'defensive', label: 'Sécurité Défensive' },
-    { id: 'scripting', label: 'Scripting & Autom.' },
-    { id: 'reverse', label: 'Reverse Eng.' }
+    { id: 'all', label: t('projects.filterAll') },
+    { id: 'pentest', label: t('projects.filterPentest') },
+    { id: 'defensive', label: t('projects.filterDefensive') },
+    { id: 'scripting', label: t('projects.filterScripting') },
+    { id: 'reverse', label: t('projects.filterReverse') }
   ];
 
   const filteredProjects = filter === 'all'
@@ -46,22 +65,24 @@ export default function Projects({ projects }) {
     : projects.filter(p => p.category === filter);
 
 
-
   return (
     <section className="section-container reveal visible">
       <div className="section-header">
+        <button className="page-back-btn" onClick={handleBack} aria-label={t('common.back')}>
+          <ArrowLeft size={18} />
+          <span>{t('common.back')}</span>
+        </button>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <h2 className="section-title">
             <FolderGit2 className="title-icon" size={28} />
-            Mes Travaux & Projets
+            {t('projects.sectionTitle')}
             <div className="title-line"></div>
           </h2>
         </div>
         <p className="section-desc">
-          Une sélection de projets techniques réalisés en laboratoire, simulant des attaques,
-          des audits de sécurité, du reverse engineering et le déploiement d'architectures SOC.
+          {t('projects.sectionDesc')}
           <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontSize: '0.8rem', marginLeft: 8 }}>
-            [{projects.length} projet{projects.length !== 1 ? 's' : ''}]
+            {t('projects.projectCount', { count: projects.length })}
           </span>
         </p>
       </div>
@@ -82,7 +103,7 @@ export default function Projects({ projects }) {
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-          <p style={{ marginBottom: 8 }}>Aucun projet dans cette catégorie.</p>
+          <p style={{ marginBottom: 8 }}>{t('projects.noProjects')}</p>
         </div>
       ) : (
         <div className="projects-grid">
@@ -90,7 +111,7 @@ export default function Projects({ projects }) {
             <div key={project.id} className="project-card glass-panel">
               <div className="project-card-header">
                 <span className={`project-badge-status ${project.status === 'COMPLETED' ? 'completed' : 'in-progress'}`}>
-                  {project.status === 'COMPLETED' ? '[RESOLVED]' : '[IN_PROGRESS]'}
+                  {project.status === 'COMPLETED' ? t('projects.badgeCompleted') : t('projects.badgeInProgress')}
                 </span>
                 <span className="project-date">{project.date}</span>
               </div>
@@ -110,7 +131,7 @@ export default function Projects({ projects }) {
                   onClick={() => setSelectedProject(project)}
                 >
                   <Search size={14} />
-                  Détails
+                  {t('projects.details')}
                 </button>
                 {project.githubLink && (
                   <a
@@ -120,7 +141,7 @@ export default function Projects({ projects }) {
                     className="project-link-btn"
                   >
                     <Github size={14} />
-                    GitHub
+                    {t('projects.github')}
                   </a>
                 )}
               </div>
@@ -139,7 +160,7 @@ export default function Projects({ projects }) {
             <button
               className="modal-close-btn"
               onClick={() => setSelectedProject(null)}
-              aria-label="Fermer la modale"
+              aria-label={t('common.close')}
             >
               <X size={20} />
             </button>
@@ -147,7 +168,7 @@ export default function Projects({ projects }) {
             <div className="modal-header-section">
               <div className="modal-meta-row">
                 <span className={`project-badge-status ${selectedProject.status === 'COMPLETED' ? 'completed' : 'in-progress'}`}>
-                  {selectedProject.status === 'COMPLETED' ? 'STATUS: RESOLVED' : 'STATUS: IN_PROGRESS'}
+                  {selectedProject.status === 'COMPLETED' ? t('projects.modalStatusCompleted') : t('projects.modalStatusInProgress')}
                 </span>
                 <span className="project-date" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Calendar size={14} />
@@ -161,7 +182,7 @@ export default function Projects({ projects }) {
               <div>
                 <h4 className="modal-sub-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Shield size={16} />
-                  Description Générale
+                  {t('projects.modalDescription')}
                 </h4>
                 <p>{selectedProject.description}</p>
               </div>
@@ -170,14 +191,14 @@ export default function Projects({ projects }) {
                 <div>
                   <h4 className="modal-sub-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Activity size={16} />
-                    Détails de l'Implémentation
+                    {t('projects.modalDetails')}
                   </h4>
                   <p style={{ whiteSpace: 'pre-line' }}>{selectedProject.details}</p>
                 </div>
               )}
 
               <div>
-                <h4 className="modal-sub-title">Technologies Appliquées</h4>
+                <h4 className="modal-sub-title">{t('projects.modalTechnologies')}</h4>
                 <div className="project-tags" style={{ marginTop: '10px' }}>
                   {(selectedProject.tags || []).map((tag, idx) => (
                     <span key={idx} className="project-tag">{tag}</span>
@@ -196,7 +217,7 @@ export default function Projects({ projects }) {
                   style={{ textDecoration: 'none' }}
                 >
                   <Github size={14} />
-                  Consulter le Code Source
+                  {t('projects.modalViewSource')}
                 </a>
               )}
             </div>

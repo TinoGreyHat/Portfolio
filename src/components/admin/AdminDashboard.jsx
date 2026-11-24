@@ -1,11 +1,25 @@
-import { useState, useEffect } from 'react';
-import { LogOut, FolderGit2, Award, Plus, Trash2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useNavigate } from 'react-router-dom';
+import { LogOut, FolderGit2, Award, Plus, Trash2, MapPin, Loader2, Lock, LockOpen, ArrowLeft, Globe } from 'lucide-react';
 import { logoutAdmin, loadProjects, loadCerts, deleteProject, deleteCert, saveProject, saveCert } from '../../services/apiService';
+import {
+    loadRoadmap,
+    updateRoadmapLevel
+} from '../../services/roadmapService';
 
 export default function AdminDashboard({ onLogout }) {
+  const { t, lang, setLang, availableLangs } = useI18n();
+  const { resolvedMode, setMode, availableModes } = useTheme();
+  const navigate = useNavigate();
+  const handleBack = () => navigate('/');
   const [activeTab, setActiveTab] = useState('projects');
   const [projects, setProjects] = useState([]);
   const [certs, setCerts] = useState([]);
+  const [roadmapLevels, setRoadmapLevels] = useState([]);
+  const [loadingRoadmap, setLoadingRoadmap] = useState(false);
+  const [savingLevel, setSavingLevel] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -21,31 +35,50 @@ export default function AdminDashboard({ onLogout }) {
     }
   };
 
+  const fetchRoadmap = useCallback(async () => {
+    setLoadingRoadmap(true);
+    try {
+      const data = await loadRoadmap();
+      const sorted = [...data].sort((a, b) => a.levelNumber - b.levelNumber);
+      setRoadmapLevels(sorted);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingRoadmap(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'roadmap') {
+      fetchRoadmap();
+    }
+  }, [activeTab, fetchRoadmap]);
+
   const handleLogout = () => {
     logoutAdmin();
     onLogout();
   };
 
   const handleDeleteProject = async (id) => {
-    if(window.confirm('Supprimer ce projet ?')) {
+    if (window.confirm(t('admin.confirm.deleteProject'))) {
       await deleteProject(id);
       fetchData();
     }
   };
 
   const handleDeleteCert = async (id) => {
-    if(window.confirm('Supprimer cette certification ?')) {
+    if (window.confirm(t('admin.confirm.deleteCert'))) {
       await deleteCert(id);
       fetchData();
     }
   };
 
   const handleAddProject = async () => {
-    const title = prompt("Titre du projet:");
+    const title = prompt(t('admin.prompt.projectTitle'));
     if (!title) return;
-    const desc = prompt("Description:");
+    const desc = prompt(t('admin.prompt.projectDesc'));
     if (!desc) return;
-    
+
     await saveProject({
         title,
         description: desc,
@@ -58,11 +91,11 @@ export default function AdminDashboard({ onLogout }) {
   };
 
   const handleAddCert = async () => {
-    const title = prompt("Titre de la certif:");
+    const title = prompt(t('admin.prompt.certTitle'));
     if (!title) return;
-    const issuer = prompt("Organisme:");
+    const issuer = prompt(t('admin.prompt.certIssuer'));
     if (!issuer) return;
-    
+
     await saveCert({
         title,
         issuer,
@@ -73,24 +106,166 @@ export default function AdminDashboard({ onLogout }) {
     fetchData();
   };
 
+  const getLevelTitle = (levelNumber) => {
+    // Use the level's title from the data if available, otherwise generate a default
+    const level = roadmapLevels.find(l => l.levelNumber === levelNumber);
+    if (level && level.title) return level.title;
+    return `Niveau ${levelNumber}`;
+  };
+
+  const getStatusLabel = (status) => {
+    return t(`admin.roadmap.statusLabels.${status.toLowerCase()}`) || status;
+  };
+
+  const handleToggleLock = async (levelNumber, currentStatus) => {
+    const newStatus = currentStatus === 'FUTURE' ? 'IN_PROGRESS' : 'FUTURE';
+    const confirmMsg = currentStatus === 'FUTURE' ? t('admin.roadmap.confirmUnlock') : t('admin.roadmap.confirmLock');
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setSavingLevel(levelNumber);
+    try {
+      await updateRoadmapLevel(levelNumber, { status: newStatus });
+      setRoadmapLevels(prev => prev.map(l =>
+        l.levelNumber === levelNumber ? { ...l, status: newStatus } : l
+      ));
+      // Show success feedback
+      console.log(t('admin.roadmap.saveSuccess'));
+    } catch (e) {
+      console.error(e);
+      alert(t('admin.roadmap.saveError'));
+    } finally {
+      setSavingLevel(null);
+    }
+  };
+
+  const handleUnlockAll = async () => {
+    if (!window.confirm(t('admin.roadmap.bulkActions.confirmUnlockAll'))) return;
+
+    setSavingLevel('all');
+    try {
+      for (const level of roadmapLevels) {
+        if (level.status === 'FUTURE') {
+          await updateRoadmapLevel(level.levelNumber, { status: 'IN_PROGRESS' });
+        }
+      }
+      setRoadmapLevels(prev => prev.map(l =>
+        l.status === 'FUTURE' ? { ...l, status: 'IN_PROGRESS' } : l
+      ));
+      console.log(t('admin.roadmap.saveSuccess'));
+    } catch (e) {
+      console.error(e);
+      alert(t('admin.roadmap.saveError'));
+    } finally {
+      setSavingLevel(null);
+    }
+  };
+
+  const handleLockAll = async () => {
+    if (!window.confirm(t('admin.roadmap.bulkActions.confirmLockAll'))) return;
+
+    setSavingLevel('all');
+    try {
+      for (const level of roadmapLevels) {
+        if (level.status !== 'FUTURE') {
+          await updateRoadmapLevel(level.levelNumber, { status: 'FUTURE' });
+        }
+      }
+      setRoadmapLevels(prev => prev.map(l =>
+        l.status !== 'FUTURE' ? { ...l, status: 'FUTURE' } : l
+      ));
+      console.log(t('admin.roadmap.saveSuccess'));
+    } catch (e) {
+      console.error(e);
+      alert(t('admin.roadmap.saveError'));
+    } finally {
+      setSavingLevel(null);
+    }
+  };
+
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'COMPLETED': return 'status-completed';
+      case 'IN_PROGRESS': return 'status-in-progress';
+      case 'FUTURE': return 'status-future';
+      default: return '';
+    }
+  };
+
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', color: 'var(--text-light)', padding: 40 }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 40, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>[TINOGREYHAT_SYSADMIN]</h1>
-        <button onClick={handleLogout} className="cyber-btn sec">
-          <LogOut size={16} style={{ marginRight: 8 }} />
-          LOGOUT
+    <div className="glass-panel" style={{ minHeight: '100vh', background: 'var(--bg-cyber)', color: 'var(--text-main)', padding: 40 }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 40, borderBottom: '1px solid var(--border-card)', paddingBottom: 20, gap: 16, flexWrap: 'wrap' }}>
+        <button className="page-back-btn" onClick={handleBack} aria-label={t('common.back')}>
+          <ArrowLeft size={18} />
+          <span>{t('common.back')}</span>
         </button>
+        <h1 style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>[TINOGREYHAT_SYSADMIN]</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Language Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: 'var(--card-bg)', border: '1px solid var(--border-card)', borderRadius: 6 }}>
+            <Globe size={14} style={{ color: 'var(--text-muted)' }} />
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-main)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+              aria-label={t('admin.lang.label')}
+            >
+              {availableLangs.map(l => (
+                <option key={l} value={l}>{l.toUpperCase()}</option>
+              ))}
+            </select>
+          </div>
+          {/* Theme/Brightness Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: 'var(--card-bg)', border: '1px solid var(--border-card)', borderRadius: 6 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('admin.theme.label')}</span>
+            <select
+              value={resolvedMode}
+              onChange={(e) => setMode(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-main)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+              aria-label={t('admin.theme.label')}
+            >
+              {availableModes.map(m => (
+                <option key={m} value={m}>
+                  {m === 'dark' ? t('admin.theme.dark') : m === 'light' ? t('admin.theme.light') : t('admin.theme.system')}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button onClick={handleLogout} className="cyber-btn sec">
+            <LogOut size={16} style={{ marginRight: 8 }} />
+            {t('admin.logout')}
+          </button>
+        </div>
       </header>
 
       <div style={{ display: 'flex', gap: 20, marginBottom: 40 }}>
         <button className={"cyber-btn " + (activeTab === 'projects' ? '' : 'sec')} onClick={() => setActiveTab('projects')}>
           <FolderGit2 size={16} style={{ marginRight: 8 }} />
-          PROJETS
+          {t('admin.tabs.projects')}
         </button>
         <button className={"cyber-btn " + (activeTab === 'certs' ? '' : 'sec')} onClick={() => setActiveTab('certs')}>
           <Award size={16} style={{ marginRight: 8 }} />
-          CERTIFICATIONS
+          {t('admin.tabs.certifications')}
+        </button>
+        <button className={"cyber-btn " + (activeTab === 'roadmap' ? '' : 'sec')} onClick={() => setActiveTab('roadmap')}>
+          <MapPin size={16} style={{ marginRight: 8 }} />
+          {t('admin.tabs.roadmap')}
         </button>
       </div>
 
@@ -98,22 +273,22 @@ export default function AdminDashboard({ onLogout }) {
         {activeTab === 'projects' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2>Gestion des Projets</h2>
-              <button onClick={handleAddProject} className="cyber-btn"><Plus size={16} style={{ marginRight: 8 }}/> Ajouter</button>
+              <h2>{t('admin.projects.title')}</h2>
+              <button onClick={handleAddProject} className="cyber-btn"><Plus size={16} style={{ marginRight: 8 }}/> {t('admin.projects.add')}</button>
             </div>
             <div className="glass-panel" style={{ padding: 20 }}>
               <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                    <th style={{ padding: 10 }}>ID</th>
-                    <th style={{ padding: 10 }}>Titre</th>
-                    <th style={{ padding: 10 }}>Catégorie</th>
-                    <th style={{ padding: 10 }}>Actions</th>
+                  <tr style={{ borderBottom: '1px solid var(--border-card)' }}>
+                    <th style={{ padding: 10 }}>{t('admin.table.id')}</th>
+                    <th style={{ padding: 10 }}>{t('admin.table.title')}</th>
+                    <th style={{ padding: 10 }}>{t('admin.table.category')}</th>
+                    <th style={{ padding: 10 }}>{t('admin.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {projects.map(p => (
-                    <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <tr key={p.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       <td style={{ padding: 10, fontFamily: 'var(--font-mono)' }}>{p.id}</td>
                       <td style={{ padding: 10 }}>{p.title}</td>
                       <td style={{ padding: 10 }}>{p.category}</td>
@@ -133,22 +308,22 @@ export default function AdminDashboard({ onLogout }) {
         {activeTab === 'certs' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2>Gestion des Certifications</h2>
-              <button onClick={handleAddCert} className="cyber-btn"><Plus size={16} style={{ marginRight: 8 }}/> Ajouter</button>
+              <h2>{t('admin.certs.title')}</h2>
+              <button onClick={handleAddCert} className="cyber-btn"><Plus size={16} style={{ marginRight: 8 }}/> {t('admin.certs.add')}</button>
             </div>
             <div className="glass-panel" style={{ padding: 20 }}>
               <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                    <th style={{ padding: 10 }}>ID</th>
-                    <th style={{ padding: 10 }}>Titre</th>
-                    <th style={{ padding: 10 }}>Organisme</th>
-                    <th style={{ padding: 10 }}>Actions</th>
+                  <tr style={{ borderBottom: '1px solid var(--border-card)' }}>
+                    <th style={{ padding: 10 }}>{t('admin.table.id')}</th>
+                    <th style={{ padding: 10 }}>{t('admin.table.title')}</th>
+                    <th style={{ padding: 10 }}>{t('admin.table.issuer')}</th>
+                    <th style={{ padding: 10 }}>{t('admin.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {certs.map(c => (
-                    <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <tr key={c.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       <td style={{ padding: 10, fontFamily: 'var(--font-mono)' }}>{c.id}</td>
                       <td style={{ padding: 10 }}>{c.title}</td>
                       <td style={{ padding: 10 }}>{c.issuer}</td>
@@ -164,8 +339,99 @@ export default function AdminDashboard({ onLogout }) {
             </div>
           </div>
         )}
+
+        {activeTab === 'roadmap' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
+              <h2>{t('admin.roadmap.title')}</h2>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={handleUnlockAll} className="cyber-btn" disabled={savingLevel === 'all' || loadingRoadmap}>
+                  <LockOpen size={16} style={{ marginRight: 8 }} />
+                  {t('admin.roadmap.bulkActions.unlockAll')}
+                </button>
+                <button onClick={handleLockAll} className="cyber-btn sec" disabled={savingLevel === 'all' || loadingRoadmap}>
+                  <Lock size={16} style={{ marginRight: 8 }} />
+                  {t('admin.roadmap.bulkActions.lockAll')}
+                </button>
+              </div>
+            </div>
+            <div className="glass-panel" style={{ padding: 20 }}>
+              {loadingRoadmap ? (
+                <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                  <Loader2 size={24} className="spin" style={{ marginBottom: 16, display: 'block', margin: '0 auto 16px' }} />
+                  {t('admin.roadmap.loading')}
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border-card)' }}>
+                        <th style={{ padding: 10, width: '80px' }}>{t('admin.roadmap.table.level')}</th>
+                        <th style={{ padding: 10 }}>{t('admin.roadmap.table.title')}</th>
+                        <th style={{ padding: 10, width: '140px' }}>{t('admin.roadmap.table.status')}</th>
+                        <th style={{ padding: 10, width: '140px' }}>{t('admin.roadmap.table.locked')}</th>
+                        <th style={{ padding: 10, width: '140px' }}>{t('admin.roadmap.table.actions')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {roadmapLevels.map(level => (
+                        <tr key={level.levelNumber} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                          <td style={{ padding: 10, fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
+                            LV. {String(level.levelNumber).padStart(2, '0')}
+                          </td>
+                          <td style={{ padding: 10 }}>{level.title || getLevelTitle(level.levelNumber)}</td>
+                          <td style={{ padding: 10 }}>
+                            <span className={`status-badge ${getStatusBadgeClass(level.status)}`}>
+                              {getStatusLabel(level.status)}
+                            </span>
+                          </td>
+                          <td style={{ padding: 10, textAlign: 'center' }}>
+                            <span style={{
+                              color: level.status === 'FUTURE' ? 'var(--red)' : 'var(--accent)',
+                              fontWeight: 'bold',
+                              fontFamily: 'var(--font-mono)'
+                            }}>
+                              {level.status === 'FUTURE' ? t('admin.roadmap.table.locked') : t('admin.roadmap.table.unlocked')}
+                            </span>
+                          </td>
+                          <td style={{ padding: 10 }}>
+                            <button
+                              onClick={() => handleToggleLock(level.levelNumber, level.status)}
+                              disabled={savingLevel === level.levelNumber}
+                              className="cyber-btn"
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '0.75rem',
+                                background: level.status === 'FUTURE' ? 'var(--accent-subtle)' : 'var(--red-subtle)',
+                                borderColor: level.status === 'FUTURE' ? 'var(--accent)' : 'var(--red)',
+                                color: level.status === 'FUTURE' ? 'var(--accent)' : 'var(--red)'
+                              }}
+                            >
+                              {savingLevel === level.levelNumber ? (
+                                <Loader2 size={14} className="spin" />
+                              ) : level.status === 'FUTURE' ? (
+                                <>
+                                  <LockOpen size={14} style={{ marginRight: 6 }} />
+                                  {t('admin.roadmap.table.unlocked')}
+                                </>
+                              ) : (
+                                <>
+                                  <Lock size={14} style={{ marginRight: 6 }} />
+                                  {t('admin.roadmap.table.locked')}
+                                </>
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
