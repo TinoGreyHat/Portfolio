@@ -70,7 +70,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth ->
                 auth.requestMatchers("/api/auth/**", "/error").permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/projects/**", "/api/certifications/**", "/api/skills/**", "/api/veille/**", "/api/cve/**", "/api/roadmap/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/projects/**", "/api/certifications/**", "/api/skills/**", "/api/veille/**", "/api/cve/**", "/api/roadmap/**", "/api/page-settings/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/contact", "/api/contact/**", "/api/contact/").permitAll()
                     .anyRequest().authenticated()
             );

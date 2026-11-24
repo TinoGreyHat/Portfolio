@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { FolderGit2, X, Calendar, Shield, Activity, Search, ArrowLeft } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { FolderGit2, X, Calendar, Shield, Activity, Search, ArrowLeft, Terminal, FileText, List, Hash, Layers } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
 import { useNavigate } from 'react-router-dom';
 import { loadProjects } from '../services/apiService';
+import DOMPurify from 'dompurify';
 
 // Inline SVG component to bypass missing brand icons in the registry's lucide-react version
 const Github = (props) => (
@@ -22,6 +23,109 @@ const Github = (props) => (
     <path d="M9 18c-4.51 2-5-2-7-2" />
   </svg>
 );
+
+// Section Content Renderer
+function SectionRenderer({ section }) {
+  const { contentType, content, title, icon } = section;
+
+  const renderContent = () => {
+    switch (contentType) {
+      case 'paragraph':
+        return (
+          <div className="section-content-paragraph">
+            {content.split('\n\n').map((para, i) => (
+              <p key={i} style={{ marginBottom: '1rem', lineHeight: 1.7 }}>{para}</p>
+            ))}
+          </div>
+        );
+
+      case 'bulletList':
+        return (
+          <ul className="section-content-bulletlist" style={{ paddingLeft: '1.5rem', lineHeight: 1.8 }}>
+            {content.split('\n').filter(line => line.trim()).map((line, i) => (
+              <li key={i} style={{ position: 'relative', paddingLeft: '0.5rem' }}>
+                <span style={{ position: 'absolute', left: '-1rem', color: 'var(--accent)' }}>▸</span>
+                {line.replace(/^[-•]\s*/, '')}
+              </li>
+            ))}
+          </ul>
+        );
+
+      case 'numberedList':
+        return (
+          <ol className="section-content-numberedlist" style={{ paddingLeft: '1.5rem', lineHeight: 1.8 }}>
+            {content.split('\n').filter(line => line.trim()).map((line, i) => (
+              <li key={i}>{line.replace(/^\d+\.\s*/, '')}</li>
+            ))}
+          </ol>
+        );
+
+      case 'techList':
+        return (
+          <div className="section-content-techlist" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {content.split('\n').filter(line => line.trim()).map((tech, i) => (
+              <span key={i} className="project-tag" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--accent)' }}>
+                {tech.trim()}
+              </span>
+            ))}
+          </div>
+        );
+
+      case 'mixed':
+      default:
+        // Simple Markdown rendering for mixed content
+        const sanitized = DOMPurify.sanitize(content
+          .replace(/^### (.*$)/gim, '<h4 style="margin:1.5rem 0 0.5rem;color:var(--cyan)">$1</h4>')
+          .replace(/^## (.*$)/gim, '<h3 style="margin:1.5rem 0 0.5rem;color:var(--cyan)">$1</h3>')
+          .replace(/^# (.*$)/gim, '<h2 style="margin:1.5rem 0 0.5rem;color:var(--cyan)">$1</h2>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/`(.*?)`/g, '<code style="background:var(--card-bg);padding:0.1rem 0.3rem;border-radius:3px;font-family:var(--font-mono)">$1</code>')
+          .replace(/\n```(\w*)\n([\s\S]*?)\n```/g, '<pre style="background:var(--bg-cyber);padding:1rem;border-radius:6px;overflow-x:auto;margin:1rem 0"><code class="language-$1" style="font-family:var(--font-mono);font-size:0.85rem;line-height:1.6">$2</code></pre>')
+          .replace(/\n- (.*$)/gim, '<li>$1</li>')
+          .replace(/(<li>.*<\/li>)/s, '<ul style="padding-left:1.5rem;line-height:1.8">$1</ul>')
+          .replace(/\n\d+\. (.*$)/gim, '<li>$1</li>')
+          .replace(/\n\n/g, '</p><p style="margin:1rem 0;line-height:1.7">')
+          .replace(/^(.*$)/, '<p style="margin:1rem 0;line-height:1.7">$1')
+          .replace(/(.*)$/, '$1</p>')
+        );
+        return <div className="section-content-mixed" dangerouslySetInnerHTML={{ __html: sanitized }} />;
+    }
+  };
+
+  const ContentIcon = () => {
+    switch (contentType) {
+      case 'paragraph': return <FileText size={16} />;
+      case 'bulletList': return <List size={16} />;
+      case 'numberedList': return <Hash size={16} />;
+      case 'techList': return <Layers size={16} />;
+      case 'mixed': return <Terminal size={16} />;
+      default: return <FileText size={16} />;
+    }
+  };
+
+  return (
+    <div className="project-section" style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+        {icon && <span style={{ fontSize: '1.5rem' }}>{icon}</span>}
+        <h4 style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          color: 'var(--cyan)',
+          margin: 0,
+          fontSize: '1.1rem'
+        }}>
+          <ContentIcon style={{ color: 'var(--accent)' }} />
+          {title}
+        </h4>
+      </div>
+      <div style={{ color: 'var(--text-main)', lineHeight: 1.7 }}>
+        {renderContent()}
+      </div>
+    </div>
+  );
+}
 
 // Read-only Projects Component
 
@@ -156,6 +260,7 @@ export default function Projects() {
           <div
             className="modal-content-cyber glass-panel"
             onClick={(e) => e.stopPropagation()}
+            style={{ maxHeight: '90vh', overflow: 'auto' }}
           >
             <button
               className="modal-close-btn"
@@ -178,25 +283,43 @@ export default function Projects() {
               <h3 className="modal-title">{selectedProject.title}</h3>
             </div>
 
-            <div className="modal-body-section">
-              <div>
-                <h4 className="modal-sub-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="modal-body-section" style={{ padding: '0 1rem 1rem' }}>
+              {/* Description */}
+              <div style={{ marginBottom: '2rem' }}>
+                <h4 className="modal-sub-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
                   <Shield size={16} />
                   {t('projects.modalDescription')}
                 </h4>
-                <p>{selectedProject.description}</p>
+                <p style={{ lineHeight: 1.7 }}>{selectedProject.description}</p>
               </div>
 
-              {selectedProject.details && (
+              {/* Dynamic Sections */}
+              {(selectedProject.sections && selectedProject.sections.length > 0) && (
                 <div>
-                  <h4 className="modal-sub-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h4 className="modal-sub-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
                     <Activity size={16} />
                     {t('projects.modalDetails')}
                   </h4>
-                  <p style={{ whiteSpace: 'pre-line' }}>{selectedProject.details}</p>
+                  {selectedProject.sections
+                    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                    .map((section) => (
+                      <SectionRenderer key={section.id} section={section} />
+                    ))}
                 </div>
               )}
 
+              {/* Fallback to legacy details field if no sections */}
+              {(!selectedProject.sections || selectedProject.sections.length === 0) && selectedProject.details && (
+                <div style={{ marginBottom: '2rem' }}>
+                  <h4 className="modal-sub-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+                    <Activity size={16} />
+                    {t('projects.modalDetails')}
+                  </h4>
+                  <p style={{ whiteSpace: 'pre-line', lineHeight: 1.7 }}>{selectedProject.details}</p>
+                </div>
+              )}
+
+              {/* Technologies */}
               <div>
                 <h4 className="modal-sub-title">{t('projects.modalTechnologies')}</h4>
                 <div className="project-tags" style={{ marginTop: '10px' }}>
@@ -216,7 +339,7 @@ export default function Projects() {
                   className="cyber-btn"
                   style={{ textDecoration: 'none' }}
                 >
-                  <Github size={14} />
+                  <GithubIcon size={14} />
                   {t('projects.modalViewSource')}
                 </a>
               )}

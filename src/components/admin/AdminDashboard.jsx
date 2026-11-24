@@ -2,12 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useI18n } from '../../contexts/I18nContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, FolderGit2, Award, Plus, Trash2, MapPin, Loader2, Lock, LockOpen, ArrowLeft, Globe } from 'lucide-react';
-import { logoutAdmin, loadProjects, loadCerts, deleteProject, deleteCert, saveProject, saveCert } from '../../services/apiService';
+import { LogOut, FolderGit2, Award, Plus, Trash2, MapPin, Loader2, Lock, LockOpen, ArrowLeft, Globe, Settings } from 'lucide-react';
+import { logoutAdmin, loadProjects, loadCerts, deleteCert, saveCert, loadIssuers } from '../../services/apiService';
 import {
     loadRoadmap,
     updateRoadmapLevel
 } from '../../services/roadmapService';
+import AdminProjectsManager from './AdminProjectsManager';
+import AdminCertificationsManager from './AdminCertificationsManager';
+import PageSettingsManager from './PageSettingsManager';
 
 export default function AdminDashboard({ onLogout }) {
   const { t, lang, setLang, availableLangs } = useI18n();
@@ -35,6 +38,11 @@ export default function AdminDashboard({ onLogout }) {
     }
   };
 
+  const handleCertsRefresh = useCallback(() => {
+    // This will be called by AdminCertificationsManager after changes
+    // We don't need to do anything here as it manages its own state
+  }, []);
+
   const fetchRoadmap = useCallback(async () => {
     setLoadingRoadmap(true);
     try {
@@ -59,52 +67,10 @@ export default function AdminDashboard({ onLogout }) {
     onLogout();
   };
 
-  const handleDeleteProject = async (id) => {
-    if (window.confirm(t('admin.confirm.deleteProject'))) {
-      await deleteProject(id);
-      fetchData();
-    }
-  };
-
-  const handleDeleteCert = async (id) => {
-    if (window.confirm(t('admin.confirm.deleteCert'))) {
-      await deleteCert(id);
-      fetchData();
-    }
-  };
-
-  const handleAddProject = async () => {
-    const title = prompt(t('admin.prompt.projectTitle'));
-    if (!title) return;
-    const desc = prompt(t('admin.prompt.projectDesc'));
-    if (!desc) return;
-
-    await saveProject({
-        title,
-        description: desc,
-        status: 'COMPLETED',
-        category: 'pentest',
-        date: new Date().getFullYear().toString(),
-        tags: []
-    });
-    fetchData();
-  };
-
-  const handleAddCert = async () => {
-    const title = prompt(t('admin.prompt.certTitle'));
-    if (!title) return;
-    const issuer = prompt(t('admin.prompt.certIssuer'));
-    if (!issuer) return;
-
-    await saveCert({
-        title,
-        issuer,
-        status: 'COMPLETED',
-        date: new Date().getFullYear().toString(),
-        skills: []
-    });
-    fetchData();
-  };
+  const handleProjectsRefresh = useCallback(() => {
+    // This will be called by AdminProjectsManager after changes
+    // We don't need to do anything here as it manages its own state
+  }, []);
 
   const getLevelTitle = (levelNumber) => {
     // Use the level's title from the data if available, otherwise generate a default
@@ -267,77 +233,22 @@ export default function AdminDashboard({ onLogout }) {
           <MapPin size={16} style={{ marginRight: 8 }} />
           {t('admin.tabs.roadmap')}
         </button>
+        <button className={"cyber-btn " + (activeTab === 'pageSettings' ? '' : 'sec')} onClick={() => setActiveTab('pageSettings')}>
+          <Settings size={16} style={{ marginRight: 8 }} />
+          {t('admin.tabs.pageSettings')}
+        </button>
       </div>
 
       <div>
         {activeTab === 'projects' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2>{t('admin.projects.title')}</h2>
-              <button onClick={handleAddProject} className="cyber-btn"><Plus size={16} style={{ marginRight: 8 }}/> {t('admin.projects.add')}</button>
-            </div>
-            <div className="glass-panel" style={{ padding: 20 }}>
-              <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-card)' }}>
-                    <th style={{ padding: 10 }}>{t('admin.table.id')}</th>
-                    <th style={{ padding: 10 }}>{t('admin.table.title')}</th>
-                    <th style={{ padding: 10 }}>{t('admin.table.category')}</th>
-                    <th style={{ padding: 10 }}>{t('admin.table.actions')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projects.map(p => (
-                    <tr key={p.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                      <td style={{ padding: 10, fontFamily: 'var(--font-mono)' }}>{p.id}</td>
-                      <td style={{ padding: 10 }}>{p.title}</td>
-                      <td style={{ padding: 10 }}>{p.category}</td>
-                      <td style={{ padding: 10 }}>
-                        <button onClick={() => handleDeleteProject(p.id)} style={{ background:'transparent', border:'none', color:'var(--red)', cursor:'pointer' }}>
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <AdminProjectsManager onRefresh={handleProjectsRefresh} />
         )}
 
         {activeTab === 'certs' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2>{t('admin.certs.title')}</h2>
-              <button onClick={handleAddCert} className="cyber-btn"><Plus size={16} style={{ marginRight: 8 }}/> {t('admin.certs.add')}</button>
-            </div>
-            <div className="glass-panel" style={{ padding: 20 }}>
-              <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-card)' }}>
-                    <th style={{ padding: 10 }}>{t('admin.table.id')}</th>
-                    <th style={{ padding: 10 }}>{t('admin.table.title')}</th>
-                    <th style={{ padding: 10 }}>{t('admin.table.issuer')}</th>
-                    <th style={{ padding: 10 }}>{t('admin.table.actions')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {certs.map(c => (
-                    <tr key={c.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                      <td style={{ padding: 10, fontFamily: 'var(--font-mono)' }}>{c.id}</td>
-                      <td style={{ padding: 10 }}>{c.title}</td>
-                      <td style={{ padding: 10 }}>{c.issuer}</td>
-                      <td style={{ padding: 10 }}>
-                        <button onClick={() => handleDeleteCert(c.id)} style={{ background:'transparent', border:'none', color:'var(--red)', cursor:'pointer' }}>
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <AdminCertificationsManager
+            certifications={certs}
+            onCertificationsChange={handleCertsRefresh}
+          />
         )}
 
         {activeTab === 'roadmap' && (
@@ -430,6 +341,10 @@ export default function AdminDashboard({ onLogout }) {
               )}
             </div>
           </div>
+        )}
+
+        {activeTab === 'pageSettings' && (
+          <PageSettingsManager pageKey="certifications" />
         )}
       </div>
     </div>

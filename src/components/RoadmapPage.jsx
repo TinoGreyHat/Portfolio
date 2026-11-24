@@ -9,10 +9,11 @@ import LevelDetailPanel from './LevelDetailPanel';
 import ZoneIsland from './ZoneIsland';
 
 // --- Configuration ---
-const STEP_HEIGHT = 210;       // vertical space per level
-const TOP_PADDING = 160;       // space above the topmost level (LV.20)
-const BOTTOM_PADDING = 180;    // space below LV.00 + side quests
-const MAP_WIDTH = 1000;        // SVG viewBox width
+const STEP_HEIGHT = 210;        // vertical space per level
+const TOP_PADDING = 160;        // space above the topmost level (LV.20)
+const BOTTOM_PADDING = 180;     // space below LV.00 + side quests
+const BOTTOM_LEVEL_OFFSET = 48; // moves LV.00 node UP (circle + labels together)
+const MAP_WIDTH = 1000;         // SVG viewBox width
 const TOTAL_LEVELS = 21;
 
 const SIDE_QUESTS = [
@@ -35,10 +36,12 @@ const ACADEMIC_QUEST = [
 // X weaves left/right with a smooth sine wave for natural turns.
 function getLevelPosition(levelNumber) {
   const y = (TOTAL_LEVELS - 1 - levelNumber) * STEP_HEIGHT + TOP_PADDING;
+  // Move bottom level (LV.00) UP so its labels clear the Academic Quest card
+  const yAdjusted = levelNumber === 0 ? y - BOTTOM_LEVEL_OFFSET : y;
   const angle = levelNumber * 0.78;
   const xPercent = 50 + Math.sin(angle) * 33; // 17% .. 83%
   const side = Math.sin(angle) >= 0 ? 'right' : 'left';
-  return { y, xPercent, side };
+  return { y: yAdjusted, xPercent, side };
 }
 
 export default function RoadmapPage() {
@@ -262,7 +265,7 @@ export default function RoadmapPage() {
           })}
 
           {/* Side Quests & Academic Quest (at the bottom of the map) */}
-          <div className="side-quests-section" style={{ top: mapHeight - BOTTOM_PADDING + 20 }}>
+          <div className="side-quests-section" style={{ top: mapHeight - BOTTOM_PADDING }}>
             <div className="side-quests-grid">
               <div className="side-quest-panel">
                 <div className="side-quest-header">

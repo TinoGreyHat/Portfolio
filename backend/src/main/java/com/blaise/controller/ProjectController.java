@@ -18,32 +18,59 @@ public class ProjectController {
         this.service = service;
     }
 
+    // Public endpoint - only published projects
     @GetMapping
     public List<Project> getAll() {
-        return service.findAll();
+        return service.findAllPublished();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Project> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.findById(id));
+        Project project = service.findById(id);
+        if (project.getPublicationStatus() != Project.PublicationStatus.PUBLISHED) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(project);
     }
 
-    @PostMapping
-    public ResponseEntity<Project> create(@Valid @RequestBody Project entity) {
+    // Admin endpoints
+    @GetMapping("/admin")
+    public List<Project> getAllAdmin(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Project.PublicationStatus publicationStatus) {
+        return service.findAllWithFilters(category, status, publicationStatus);
+    }
+
+    @PostMapping("/admin")
+    public ResponseEntity<Project> createAdmin(@Valid @RequestBody Project entity) {
         return ResponseEntity.ok(service.save(entity));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Project> update(@PathVariable Long id, @Valid @RequestBody Project entity) {
+    @PutMapping("/admin/{id}")
+    public ResponseEntity<Project> updateAdmin(@PathVariable Long id, @Valid @RequestBody Project entity) {
         Project existing = service.findById(id);
         entity.setId(id);
         entity.setCreatedAt(existing.getCreatedAt());
         return ResponseEntity.ok(service.save(entity));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    @DeleteMapping("/admin/{id}")
+    public ResponseEntity<?> deleteAdmin(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/admin/reorder")
+    public ResponseEntity<?> reorderProjects(@RequestBody List<Long> projectIdsInOrder) {
+        service.reorderProjects(projectIdsInOrder);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/admin/{id}/publication-status")
+    public ResponseEntity<Project> updatePublicationStatus(
+            @PathVariable Long id,
+            @RequestParam Project.PublicationStatus status) {
+        return ResponseEntity.ok(service.updatePublicationStatus(id, status));
     }
 }

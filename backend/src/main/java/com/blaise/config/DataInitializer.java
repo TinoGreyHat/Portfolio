@@ -7,6 +7,9 @@ import com.blaise.entity.RoadmapTool;
 import com.blaise.entity.User;
 import com.blaise.entity.Project;
 import com.blaise.entity.Certification;
+import com.blaise.entity.CertificationIssuer;
+import com.blaise.entity.CertificationSkill;
+import com.blaise.entity.PageSettings;
 import com.blaise.repository.RoadmapCertificationRepository;
 import com.blaise.repository.RoadmapExperienceRepository;
 import com.blaise.repository.RoadmapLevelRepository;
@@ -14,12 +17,16 @@ import com.blaise.repository.RoadmapToolRepository;
 import com.blaise.repository.UserRepository;
 import com.blaise.repository.ProjectRepository;
 import com.blaise.repository.CertificationRepository;
+import com.blaise.repository.CertificationIssuerRepository;
+import com.blaise.repository.CertificationSkillRepository;
+import com.blaise.repository.PageSettingsRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -27,10 +34,13 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final CertificationRepository certificationRepository;
+    private final CertificationIssuerRepository issuerRepository;
+    private final CertificationSkillRepository skillRepository;
     private final RoadmapLevelRepository roadmapLevelRepository;
     private final RoadmapExperienceRepository roadmapExperienceRepository;
     private final RoadmapCertificationRepository roadmapCertificationRepository;
     private final RoadmapToolRepository roadmapToolRepository;
+    private final PageSettingsRepository pageSettingsRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${admin.username}")
@@ -45,18 +55,24 @@ public class DataInitializer implements CommandLineRunner {
     public DataInitializer(UserRepository userRepository,
                             ProjectRepository projectRepository,
                             CertificationRepository certificationRepository,
+                            CertificationIssuerRepository issuerRepository,
+                            CertificationSkillRepository skillRepository,
                             RoadmapLevelRepository roadmapLevelRepository,
                             RoadmapExperienceRepository roadmapExperienceRepository,
                             RoadmapCertificationRepository roadmapCertificationRepository,
                             RoadmapToolRepository roadmapToolRepository,
+                            PageSettingsRepository pageSettingsRepository,
                             PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
         this.certificationRepository = certificationRepository;
+        this.issuerRepository = issuerRepository;
+        this.skillRepository = skillRepository;
         this.roadmapLevelRepository = roadmapLevelRepository;
         this.roadmapExperienceRepository = roadmapExperienceRepository;
         this.roadmapCertificationRepository = roadmapCertificationRepository;
         this.roadmapToolRepository = roadmapToolRepository;
+        this.pageSettingsRepository = pageSettingsRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -121,23 +137,89 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         if (certificationRepository.count() == 0) {
+            // Create issuers
+            CertificationIssuer issuer1 = new CertificationIssuer();
+            issuer1.setName("INE / eLearnSecurity");
+            issuer1.setWebsite("https://www.ine.com");
+            issuer1.setLogo("https://www.ine.com/favicon.ico");
+            issuer1 = issuerRepository.save(issuer1);
+
+            CertificationIssuer issuer2 = new CertificationIssuer();
+            issuer2.setName("Google / Coursera");
+            issuer2.setWebsite("https://www.coursera.org");
+            issuer2.setLogo("https://www.coursera.org/favicon.ico");
+            issuer2 = issuerRepository.save(issuer2);
+
+            // Create first certification
             Certification c1 = new Certification();
             c1.setTitle("eJPT - Junior Penetration Tester");
-            c1.setIssuer("INE / eLearnSecurity");
-            c1.setDate("Avril 2024");
-            c1.setStatus("COMPLETED");
-            c1.setSkills(Arrays.asList("Host & Network Pentesting", "Web App Pentesting", "Vulnerability Assessment", "Metasploit"));
-            certificationRepository.save(c1);
+            c1.setAcronym("eJPT");
+            c1.setIssuer(issuer1);
+            c1.setCategory("Penetration Testing");
+            c1.setCertificationType("PROFESSIONAL");
+            c1.setShortDescription("Entry-level penetration testing certification validating hands-on skills in host & network pentesting, web app pentesting, and vulnerability assessment.");
+            c1.setObtainedDate("April 2024");
+            c1.setStatus("VERIFIED");
+            c1.setCredentialId("INE-eJPT-2024-001");
+            c1.setVerificationLink("https://certification.ine.com/verify/eJPT");
+            c1.setPublicationStatus(Certification.PublicationStatus.PUBLISHED);
+            c1.setIsVisible(true);
+            c1.setDisplayOrder(0);
+            c1 = certificationRepository.save(c1);
 
+            // Add skills for c1
+            List<String> skills1 = Arrays.asList("Host & Network Pentesting", "Web App Pentesting", "Vulnerability Assessment", "Metasploit", "Nmap", "Burp Suite");
+            for (int i = 0; i < skills1.size(); i++) {
+                CertificationSkill skill = new CertificationSkill();
+                skill.setCertification(c1);
+                skill.setName(skills1.get(i));
+                skill.setDisplayOrder(i);
+                skillRepository.save(skill);
+            }
+
+            // Create second certification
             Certification c2 = new Certification();
-            c2.setTitle("PICC - Cyber Security Analyst");
-            c2.setIssuer("Google / Coursera");
-            c2.setDate("Décembre 2024");
-            c2.setStatus("COMPLETED");
-            c2.setSkills(Arrays.asList("SIEM", "Incident Response", "Linux/SQL", "Python Scripting"));
-            certificationRepository.save(c2);
-            
+            c2.setTitle("Google Cybersecurity Professional Certificate");
+            c2.setAcronym("PICC");
+            c2.setIssuer(issuer2);
+            c2.setCategory("Cybersecurity Analysis");
+            c2.setCertificationType("PROFESSIONAL");
+            c2.setShortDescription("Professional certificate covering SIEM, incident response, Linux/SQL, and Python scripting for cybersecurity analysts.");
+            c2.setObtainedDate("December 2024");
+            c2.setStatus("VERIFIED");
+            c2.setCredentialId("GOOGLE-CYBER-2024-002");
+            c2.setVerificationLink("https://www.coursera.org/verify/professional-cert");
+            c2.setPublicationStatus(Certification.PublicationStatus.PUBLISHED);
+            c2.setIsVisible(true);
+            c2.setDisplayOrder(1);
+            c2 = certificationRepository.save(c2);
+
+            // Add skills for c2
+            List<String> skills2 = Arrays.asList("SIEM", "Incident Response", "Linux/SQL", "Python Scripting", "Wazuh", "Splunk");
+            for (int i = 0; i < skills2.size(); i++) {
+                CertificationSkill skill = new CertificationSkill();
+                skill.setCertification(c2);
+                skill.setName(skills2.get(i));
+                skill.setDisplayOrder(i);
+                skillRepository.save(skill);
+            }
+
             System.out.println("Certifications seeded successfully.");
+        }
+
+        // Initialize Page Settings for certifications
+        if (pageSettingsRepository.findByPageKey("certifications").isEmpty()) {
+            PageSettings certSettings = new PageSettings();
+            certSettings.setPageKey("certifications");
+            certSettings.setTitleFr("Certifications & Formations");
+            certSettings.setTitleEn("Certifications & Training");
+            certSettings.setDescriptionFr("Mes certifications professionnelles et formations validées dans le domaine de la cybersécurité et du développement.");
+            certSettings.setDescriptionEn("My professional certifications and validated training in cybersecurity and development.");
+            certSettings.setFooterFr("Ces certifications attestent de mes compétences techniques et de mon engagement envers l'excellence professionnelle.");
+            certSettings.setFooterEn("These certifications attest to my technical skills and commitment to professional excellence.");
+            certSettings.setDisplayOrder(0);
+            pageSettingsRepository.save(certSettings);
+            System.out.println("Page settings for certifications seeded successfully.");
         }
 
         // Initialize Roadmap Levels (7 fixed levels)
